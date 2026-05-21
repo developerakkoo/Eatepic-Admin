@@ -1,0 +1,11 @@
+<div class="pagination-bar" *ngIf="totalCount > 0">
+  <span class="pagination-info">Showing {{ pageStart }}–{{ pageEnd }} of {{ totalCount }} {{ entityLabel }}</span>
+  <div class="pagination-controls">
+    <button type="button" class="page-btn" [disabled]="page === 1" (click)="goPage(page - 1)" aria-label="Previous page">←</button>
+    <ng-container *ngFor="let p of visiblePages; let i = index">
+      <span class="page-ellipsis" *ngIf="i > 0 && p - visiblePages[i - 1] > 1">…</span>
+      <button type="button" class="page-btn" [class.active]="page === p" (click)="goPage(p)">{{ p }}</button>
+    </ng-container>
+    <button type="button" class="page-btn" [disabled]="page === totalPages" (click)="goPage(page + 1)" aria-label="Next page">→</button>
+  </div>
+</div>

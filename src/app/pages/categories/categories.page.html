@@ -1,0 +1,47 @@
+<app-admin-shell pageTitle="Categories">
+  <div class="page-header">
+    <h2 class="page-title">Categories<span class="count-badge">{{ categories.length }}</span></h2>
+    <button type="button" class="btn-primary" (click)="openCreate()">Add Category</button>
+  </div>
+
+  <div class="card form-card" *ngIf="showForm">
+    <h3>{{ editing ? 'Edit Category' : 'New Category' }}</h3>
+    <div class="form-grid">
+      <label>Name<input class="text-input" [(ngModel)]="name" /></label>
+      <label>Description<input class="text-input" [(ngModel)]="description" /></label>
+      <label>Image<input type="file" accept="image/*" (change)="onFileSelected($event)" /></label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="cancelForm()">Cancel</button>
+      <button type="button" class="btn-primary" [disabled]="saving" (click)="submit()">
+        {{ saving ? 'Saving…' : (editing ? 'Update' : 'Create') }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <div *ngIf="loading" class="loading-row">Loading categories…</div>
+    <table class="admin-table" *ngIf="!loading">
+      <thead>
+        <tr><th>Preview</th><th>Name</th><th>Description</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of categories">
+          <td>
+            <img *ngIf="c.image" class="thumb" [src]="c.image" [alt]="c.name" />
+            <span *ngIf="!c.image">—</span>
+          </td>
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.description || '—' }}</td>
+          <td>
+            <button type="button" class="icon-btn" (click)="openEdit(c)"><ion-icon name="pencil-outline"></ion-icon></button>
+            <button type="button" class="icon-btn danger" (click)="confirmDelete(c)"><ion-icon name="trash-outline"></ion-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!loading && !categories.length">
+      <ion-icon name="grid-outline"></ion-icon><p>No platform categories</p>
+    </div>
+  </div>
+</app-admin-shell>

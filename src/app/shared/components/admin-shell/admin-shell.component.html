@@ -1,0 +1,75 @@
+<div
+  class="shell"
+  [class.sidebar-collapsed]="(collapsed$ | async)"
+  [class.mobile-open]="(mobileOpen$ | async)"
+>
+  <div class="sidebar-backdrop" (click)="closeMobile()" *ngIf="mobileOpen$ | async"></div>
+
+  <aside class="sidebar" [class.collapsed]="(collapsed$ | async)">
+    <div class="sidebar-header">
+      <div class="brand">
+        <ion-icon name="restaurant" class="brand-icon"></ion-icon>
+        <span class="brand-text">FoodAdmin</span>
+      </div>
+      <button type="button" class="collapse-btn" (click)="toggleCollapse()" aria-label="Toggle sidebar">
+        <ion-icon [name]="(collapsed$ | async) ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ng-container *ngFor="let section of navSections">
+        <p class="section-label">{{ section.title }}</p>
+        <a
+          *ngFor="let item of section.items"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          class="nav-item"
+          (click)="closeMobile()"
+        >
+          <ion-icon [name]="item.icon"></ion-icon>
+          <span class="nav-label">{{ item.label }}</span>
+          <span
+            *ngIf="item.label === 'Orders' && (pendingCount$ | async) as count"
+            class="nav-badge"
+          >{{ count }}</span>
+        </a>
+      </ng-container>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="user$ | async as user">
+      <div class="avatar-lg">{{ user.name.charAt(0) }}</div>
+      <div class="footer-info">
+        <p class="footer-name">{{ user.name }}</p>
+        <p class="footer-role">{{ user.role | titlecase }}</p>
+      </div>
+      <button type="button" class="logout-btn" (click)="logout()" aria-label="Logout">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="hamburger" (click)="toggleMobile()" aria-label="Menu">
+          <ion-icon name="menu-outline"></ion-icon>
+        </button>
+        <h1 class="topbar-title">{{ pageTitle }}</h1>
+      </div>
+      <div class="topbar-right">
+        <button type="button" class="icon-btn" aria-label="Search">
+          <ion-icon name="search-outline"></ion-icon>
+        </button>
+        <button type="button" class="icon-btn notif-btn" aria-label="Notifications">
+          <ion-icon name="notifications-outline"></ion-icon>
+          <span class="dot"></span>
+        </button>
+        <div class="avatar-sm top-avatar" *ngIf="user$ | async as user">{{ user.name.charAt(0) }}</div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <ng-content></ng-content>
+    </main>
+  </div>
+</div>

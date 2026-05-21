@@ -1,0 +1,141 @@
+<app-admin-shell pageTitle="Orders">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Orders<span class="count-badge">{{ totalCount }}</span></h2>
+    </div>
+    <button type="button" class="btn-outline">Export CSV</button>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onSearch()" placeholder="Search by Order ID, customer name, phone..." />
+      <button type="button" class="icon-btn" *ngIf="search" (click)="search=''; onSearch()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="filter-row">
+      <button type="button" class="chip" *ngFor="let c of statusChips" [class.active]="statusFilter===c.value" (click)="setStatus(c.value)">{{ c.label }}</button>
+      <select class="select-input" [(ngModel)]="dateFilter" (ngModelChange)="onSearch()">
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="custom">Custom</option>
+      </select>
+      <select class="select-input" [(ngModel)]="sortKey" (ngModelChange)="onSearch()">
+        <option value="date">Newest</option>
+        <option value="id">Order ID</option>
+        <option value="amount">Amount</option>
+      </select>
+      <button type="button" class="btn-ghost btn-sm" (click)="resetFilters()">Reset</button>
+    </div>
+    <div class="filter-chips-row" *ngIf="activeFilters().length">
+      <span class="active-filter-chip" *ngFor="let f of activeFilters()">{{ f }} <button type="button" (click)="resetFilters()">×</button></span>
+    </div>
+  </div>
+
+  <div class="bulk-bar" *ngIf="selected.size">
+    <span>{{ selected.size }} selected</span>
+    <button type="button" class="btn-sm btn-primary">Mark Delivered</button>
+    <button type="button" class="btn-sm btn-danger">Cancel</button>
+    <button type="button" class="btn-sm btn-outline" style="color:white;border-color:#fff">Export Selected</button>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" [checked]="selected.size===paginator.items.length && paginator.items.length" (change)="toggleAll()" /></th>
+          <th class="sortable" (click)="toggleSort('id')">Order ID <ion-icon [name]="sortDir==='asc'?'arrow-up':'arrow-down'"></ion-icon></th>
+          <th>Customer</th>
+          <th>Partner</th>
+          <th>Items</th>
+          <th class="sortable" (click)="toggleSort('amount')">Amount</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th class="sortable" (click)="toggleSort('date')">Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3,4,5]"><td colspan="10"><div class="skeleton"></div></td></tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async) && paginator.items.length">
+        <tr *ngFor="let o of paginator.items" [class.selected]="selected.has(o.id)">
+          <td><input type="checkbox" [checked]="selected.has(o.id)" (change)="toggleSelect(o.id)" /></td>
+          <td><span class="order-id">{{ o.id }}</span></td>
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm">{{ o.customerName.charAt(0) }}</div>
+              <div><div>{{ o.customerName }}</div><div class="sub-text">{{ o.customerPhone }}</div></div>
+            </div>
+          </td>
+          <td>{{ o.partner }}</td>
+          <td><span class="count-badge">{{ o.itemCount }} items</span></td>
+          <td><strong>₹{{ o.amount }}</strong></td>
+          <td><ion-icon [name]="paymentIcon(o.payment)"></ion-icon> {{ paymentLabel(o.payment) }}</td>
+          <td><span class="status-badge" [class]="o.status">{{ o.status | titlecase }}</span></td>
+          <td>{{ o.date }}<br /><span class="sub-text">{{ o.time }}</span></td>
+          <td>
+            <button type="button" class="icon-btn" (click)="openDrawer(o)"><ion-icon name="eye-outline"></ion-icon></button>
+            <button type="button" class="icon-btn"><ion-icon name="pencil-outline"></ion-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$ | async) && !paginator.items.length">
+      <ion-icon name="receipt-outline"></ion-icon>
+      <p>No orders found</p>
+    </div>
+    <app-table-pagination
+      [paginator]="paginator"
+      entityLabel="orders"
+      (pageChange)="onPageChange($event)"
+    ></app-table-pagination>
+  </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+  <aside class="order-drawer" [class.open]="drawerOpen" *ngIf="selectedOrder as order">
+    <div class="drawer-header">
+      <h3>{{ order.id }}</h3>
+      <button type="button" class="icon-btn" (click)="closeDrawer()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="drawer-body">
+      <h4>Customer</h4>
+      <p><strong>{{ order.customerName }}</strong><br />{{ order.customerPhone }}</p>
+      <h4>Items</h4>
+      <ul>
+        <li *ngFor="let item of order.items">{{ item.name }} × {{ item.qty }} — ₹{{ item.price * item.qty }}</li>
+      </ul>
+      <p><strong>Total: ₹{{ order.amount }}</strong></p>
+      <h4>Status Timeline</h4>
+      <div class="timeline">
+        <div class="timeline-step" *ngFor="let step of order.timeline" [class.done]="step.done">
+          <span class="dot"></span>
+          <span>{{ step.step }}</span>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Assign driver</label>
+        <select class="select-input" style="width:100%" [(ngModel)]="selectedDriverId">
+          <option value="">Unassigned</option>
+          <option *ngFor="let d of drivers" [value]="d.id">{{ d.fullName }} ({{ d.mobileNumber }})</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" class="btn-ghost btn-sm" (click)="assignDriver(false)">Assign</button>
+          <button type="button" class="btn-ghost btn-sm" (click)="assignDriver(true)">Auto-assign</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Update Status</label>
+        <select class="select-input" style="width:100%" [(ngModel)]="drawerStatus">
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <button type="button" class="btn-primary" style="width:100%" (click)="saveStatus()">Save</button>
+    </div>
+  </aside>
+</app-admin-shell>

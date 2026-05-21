@@ -1,0 +1,25 @@
+@import '../orders/orders.page.scss';
+
+.drawer-section-title {
+  margin: 16px 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.address-block {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.drawer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}

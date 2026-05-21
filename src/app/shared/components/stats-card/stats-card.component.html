@@ -1,0 +1,13 @@
+<div class="stats-card card">
+  <div class="icon-wrap" [class]="color">
+    <ion-icon [name]="icon"></ion-icon>
+  </div>
+  <div class="stats-body">
+    <p class="stats-value">{{ value }}</p>
+    <p class="stats-label">{{ label }}</p>
+    <p class="stats-trend" [class.up]="trendUp" [class.down]="!trendUp">
+      <ion-icon [name]="trendUp ? 'arrow-up-outline' : 'arrow-down-outline'"></ion-icon>
+      {{ trend }}% vs yesterday
+    </p>
+  </div>
+</div>

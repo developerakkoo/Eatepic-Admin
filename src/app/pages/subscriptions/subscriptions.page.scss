@@ -1,0 +1,72 @@
+@import '../orders/orders.page.scss';
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.mini-stat {
+  padding: 20px 24px;
+
+  span {
+    display: block;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+  }
+
+  strong {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.subscriptions-drawer .drawer-deliveries-title {
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subscriptions-drawer .hint {
+  font-size: 13px;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.subscriptions-drawer .table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.subscriptions-drawer .subscription-del-table td {
+  vertical-align: middle;
+}
+
+.subscriptions-drawer .cell-input {
+  width: 140px;
+  max-width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  font-size: 12px;
+}
+
+.subscriptions-drawer .delivery-actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  white-space: normal;
+}
+
+.subscriptions-drawer .btn-xs {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}

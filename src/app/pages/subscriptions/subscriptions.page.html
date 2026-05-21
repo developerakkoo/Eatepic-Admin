@@ -1,0 +1,115 @@
+<app-admin-shell pageTitle="Subscriptions">
+  <div class="stats-row" *ngIf="stats$ | async as st">
+    <div class="mini-stat card"><span>Active</span><strong>{{ st.active }}</strong></div>
+    <div class="mini-stat card"><span>Expiring This Week</span><strong>{{ st.expiring }}</strong></div>
+    <div class="mini-stat card"><span>Revenue from Subs</span><strong>{{ st.revenue }}</strong></div>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search by subscriber name or plan" />
+    </div>
+    <div class="filter-row">
+      <button type="button" class="chip" [class.active]="planFilter==='all'" (click)="planFilter='all'; onFilterChange()">All Plans</button>
+      <button type="button" class="chip" [class.active]="planFilter==='daily'" (click)="planFilter='daily'; onFilterChange()">Daily</button>
+      <button type="button" class="chip" [class.active]="planFilter==='weekly'" (click)="planFilter='weekly'; onFilterChange()">Weekly</button>
+      <button type="button" class="chip" [class.active]="planFilter==='monthly'" (click)="planFilter='monthly'; onFilterChange()">Monthly</button>
+      <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+        <option value="expired">Expired</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Sub ID</th><th>Customer</th><th>Plan</th><th>Partner</th><th>Meals/Day</th>
+          <th>Period</th><th>Amount</th><th>Status</th><th>Auto-Renew</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="10"><div class="skeleton"></div></td></tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async)">
+        <tr *ngFor="let s of paginator.items">
+          <td><span class="order-id">{{ s.id }}</span></td>
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm">{{ s.customerName.charAt(0) }}</div>
+              <div><div>{{ s.customerName }}</div><div class="sub-text">{{ s.customerPhone }}</div></div>
+            </div>
+          </td>
+          <td><span class="plan-badge" [class]="s.plan">{{ s.plan | titlecase }}</span></td>
+          <td>{{ s.partner }}</td>
+          <td>{{ s.mealsPerDay }}</td>
+          <td>{{ s.startDate }} → {{ s.endDate }}</td>
+          <td><strong>₹{{ s.amount }}</strong></td>
+          <td><span class="status-badge" [class]="s.status">{{ s.status | titlecase }}</span></td>
+          <td><ion-toggle [checked]="s.autoRenew" (ionChange)="toggleRenew(s)"></ion-toggle></td>
+          <td><button class="icon-btn" (click)="openDrawer(s)"><ion-icon name="eye-outline"></ion-icon></button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$|async) && !filtered.length"><ion-icon name="calendar-outline"></ion-icon><p>No subscriptions</p></div>
+    <app-table-pagination [paginator]="paginator" entityLabel="subscriptions" (pageChange)="onPageChange($event)"></app-table-pagination>
+  </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="drawerOpen=false"></div>
+  <aside class="order-drawer subscriptions-drawer" [class.open]="drawerOpen" *ngIf="selected as s">
+    <div class="drawer-header"><h3>{{ s.id }}</h3><button class="icon-btn" (click)="drawerOpen=false"><ion-icon name="close-outline"></ion-icon></button></div>
+    <div class="drawer-body">
+      <p><strong>{{ s.customerName }}</strong><br/>{{ s.customerPhone }}</p>
+      <p>Plan: <span class="plan-badge" [class]="s.plan">{{ s.plan }}</span></p>
+      <p>Delivery: {{ s.mealsPerDay }} meals/day</p>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn-ghost btn-sm">Pause</button>
+        <button class="btn-danger btn-sm">Cancel</button>
+        <button class="btn-primary btn-sm">Extend</button>
+      </div>
+
+      <div class="drawer-deliveries" *ngIf="drawerLoading">Loading deliveries…</div>
+
+      <ng-container *ngIf="!drawerLoading">
+        <h4 class="drawer-deliveries-title">Deliveries</h4>
+        <p class="hint" *ngIf="!drawerDeliveries?.length">No delivery rows loaded.</p>
+        <div class="table-scroll">
+          <table class="admin-table compact-table subscription-del-table" *ngIf="drawerDeliveries?.length">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Order</th>
+                <th>Driver id</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of drawerDeliveries">
+                <td>{{ deliveryDateForPipe(d) | date:'mediumDate':'UTC' }}</td>
+                <td><span class="status-badge">{{ d['status'] }}</span></td>
+                <td><code class="order-id">{{ orderIdForRow(d) || '—' }}</code></td>
+                <td>
+                  <input
+                    class="cell-input"
+                    [(ngModel)]="driverDraft[deliveryRowId(d)]"
+                    placeholder="Driver ObjectId"
+                  />
+                </td>
+                <td class="delivery-actions-cell">
+                  <button type="button" class="btn-primary btn-xs" (click)="applyDriver(d)">Save driver</button>
+                  <button type="button" class="btn-danger btn-xs" (click)="skipDelivery(d)">Skip</button>
+                  <button type="button" class="btn-ghost btn-xs" (click)="unlinkOrder(d)">Unlink order</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+    </div>
+  </aside>
+</app-admin-shell>

@@ -1,0 +1,44 @@
+<app-admin-shell pageTitle="Banners">
+  <div class="page-header">
+    <h2 class="page-title">Banners<span class="count-badge">{{ banners.length }}</span></h2>
+    <button type="button" class="btn-primary" (click)="openCreate()">Add Banner</button>
+  </div>
+
+  <div class="card form-card" *ngIf="showForm">
+    <h3>{{ editing ? 'Edit Banner' : 'New Banner' }}</h3>
+    <div class="form-grid">
+      <label>Title<input class="text-input" [(ngModel)]="title" /></label>
+      <label>Redirect link<input class="text-input" [(ngModel)]="redirectLink" placeholder="/offers" /></label>
+      <label>Image<input type="file" accept="image/*" (change)="onFileSelected($event)" /></label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="cancelForm()">Cancel</button>
+      <button type="button" class="btn-primary" [disabled]="saving" (click)="submit()">
+        {{ saving ? 'Saving…' : (editing ? 'Update' : 'Create') }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <div *ngIf="loading" class="loading-row">Loading banners…</div>
+    <table class="admin-table" *ngIf="!loading">
+      <thead>
+        <tr><th>Preview</th><th>Title</th><th>Link</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of banners">
+          <td><img class="thumb" [src]="b.image" [alt]="b.title" /></td>
+          <td><strong>{{ b.title }}</strong></td>
+          <td>{{ b.redirectLink || '—' }}</td>
+          <td>
+            <button type="button" class="icon-btn" (click)="openEdit(b)"><ion-icon name="pencil-outline"></ion-icon></button>
+            <button type="button" class="icon-btn danger" (click)="confirmDelete(b)"><ion-icon name="trash-outline"></ion-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!loading && !banners.length">
+      <ion-icon name="images-outline"></ion-icon><p>No banners yet</p>
+    </div>
+  </div>
+</app-admin-shell>

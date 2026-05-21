@@ -1,0 +1,106 @@
+<app-admin-shell pageTitle="Users">
+  <div class="page-header">
+    <h2 class="page-title">Users<span class="count-badge">{{ totalCount }}</span></h2>
+    <button type="button" class="btn-primary" disabled title="Users register in the food app">Add User</button>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search by name, email, phone" />
+    </div>
+    <div class="filter-row">
+      <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="blocked">Blocked</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>User</th><th>Email</th><th>Phone</th><th>Role</th><th>Orders</th><th>Active Sub</th><th>Joined</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="9"><div class="skeleton"></div></td></tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async)">
+        <tr *ngFor="let u of paginator.items">
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm">{{ u.name.charAt(0) }}</div>
+              <strong>{{ u.name }}</strong>
+            </div>
+          </td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.phone }}</td>
+          <td><span class="count-badge">{{ u.role | titlecase }}</span></td>
+          <td>{{ u.totalOrders }}</td>
+          <td><span class="status-badge" [class.active]="u.activeSub" [class.expired]="!u.activeSub">{{ u.activeSub ? 'Yes' : 'No' }}</span></td>
+          <td>{{ u.joinedDate }}</td>
+          <td>
+            <ion-toggle
+              [checked]="u.status === 'active'"
+              (ionChange)="onRowStatusChange(u, $event)"
+            ></ion-toggle>
+          </td>
+          <td>
+            <button type="button" class="icon-btn" (click)="openDrawer(u)"><ion-icon name="eye-outline"></ion-icon></button>
+            <button type="button" class="icon-btn danger" (click)="confirmDelete(u)"><ion-icon name="trash-outline"></ion-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$|async) && !filtered.length">
+      <ion-icon name="people-outline"></ion-icon>
+      <p>No users found</p>
+    </div>
+    <app-table-pagination [paginator]="paginator" entityLabel="users" (pageChange)="onPageChange($event)"></app-table-pagination>
+  </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+  <aside class="order-drawer" [class.open]="drawerOpen">
+    <div class="drawer-header">
+      <h3 *ngIf="selected">{{ selected.name }}</h3>
+      <h3 *ngIf="!selected && drawerLoading">Loading…</h3>
+      <button type="button" class="icon-btn" (click)="closeDrawer()"><ion-icon name="close-outline"></ion-icon></button>
+    </div>
+    <div class="drawer-body" *ngIf="drawerLoading">
+      <div class="skeleton" style="height:120px"></div>
+    </div>
+    <div class="drawer-body" *ngIf="selected as s">
+      <p><strong>Email</strong><br />{{ s.email }}</p>
+      <p><strong>Phone</strong><br />{{ s.phone }}</p>
+      <p><strong>Joined</strong><br />{{ s.joinedDate }}</p>
+      <p><strong>Wallet</strong><br />₹{{ s.walletBalance }}</p>
+      <p><strong>Orders</strong> {{ s.totalOrders }} · <strong>Subscriptions</strong> {{ s.subscriptionCount }}</p>
+      <p>
+        <strong>Active subscription</strong>
+        <span class="status-badge" [class.active]="s.activeSub" [class.expired]="!s.activeSub">{{ s.activeSub ? 'Yes' : 'No' }}</span>
+      </p>
+      <p *ngIf="s.referralCode"><strong>Referral</strong> {{ s.referralCode }}</p>
+
+      <h4 class="drawer-section-title">Addresses</h4>
+      <div *ngIf="s.addresses.length; else noAddresses">
+        <div class="address-block" *ngFor="let a of s.addresses">
+          <strong>{{ a.label || 'Address' }}</strong>
+          <span *ngIf="a.isDefault" class="count-badge">Default</span>
+          <p>{{ a.fullAddress }}</p>
+          <p class="sub-text" *ngIf="a.city">{{ a.city }}, {{ a.state }} {{ a.pincode }}</p>
+        </div>
+      </div>
+      <ng-template #noAddresses>
+        <p class="sub-text">No saved addresses</p>
+      </ng-template>
+
+      <div class="drawer-actions">
+        <label>Account active</label>
+        <ion-toggle [checked]="s.status === 'active'" (ionChange)="onDrawerStatusChange($event)"></ion-toggle>
+      </div>
+    </div>
+  </aside>
+</app-admin-shell>

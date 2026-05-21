@@ -1,0 +1,74 @@
+<ion-content [fullscreen]="true" class="auth-page">
+  <div class="auth-layout">
+    <aside class="auth-brand">
+      <div class="brand-inner">
+        <h1 class="logo">FoodAdmin</h1>
+        <p class="tagline">Create your admin account to get started</p>
+        <ul class="features">
+          <li *ngFor="let f of features">
+            <ion-icon name="checkmark-circle" class="check"></ion-icon>
+            {{ f }}
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="auth-form-section">
+      <div class="auth-card card">
+        <h2>Create Account</h2>
+        <p class="subtitle">Fill in the details below.</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()">
+          <div class="form-field">
+            <label>Full Name</label>
+            <input formControlName="fullName" placeholder="John Doe" />
+            <p class="field-error" *ngIf="form.get('fullName')?.touched && form.get('fullName')?.invalid">Name is required</p>
+          </div>
+
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+            <p class="field-error" *ngIf="form.get('email')?.touched && form.get('email')?.invalid">Valid email required</p>
+          </div>
+
+          <div class="form-field">
+            <label>Phone</label>
+            <input formControlName="phone" placeholder="+91 98765 43210" />
+            <p class="field-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.invalid">Valid phone required</p>
+          </div>
+
+          <div class="form-field">
+            <label>Password</label>
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password" />
+          </div>
+
+          <div class="form-field">
+            <label>Confirm Password</label>
+            <input [type]="showConfirm ? 'text' : 'password'" formControlName="confirmPassword" />
+            <p class="field-error" *ngIf="form.touched && form.hasError('mismatch')">Passwords do not match</p>
+          </div>
+
+          <div class="form-field">
+            <label>Role</label>
+            <select formControlName="role" class="select-input" style="width:100%;height:44px">
+              <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>Secret Admin Key</label>
+            <input type="password" formControlName="secretKey" placeholder="Enter admin key" />
+            <p class="field-error" *ngIf="form.get('secretKey')?.touched && form.get('secretKey')?.invalid">Secret key required</p>
+          </div>
+
+          <button type="submit" class="btn-primary btn-lg" [disabled]="loading">
+            <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+            <span *ngIf="!loading">Create Account</span>
+          </button>
+        </form>
+
+        <p class="auth-switch">Already have account? <a routerLink="/auth/login">Sign In</a></p>
+      </div>
+    </section>
+  </div>
+</ion-content>

@@ -1,0 +1,187 @@
+<app-admin-shell pageTitle="Drivers">
+  <div class="page-header">
+    <h2 class="page-title">Drivers<span class="count-badge">{{ totalCount }}</span></h2>
+    <span class="sub-text">Approve new registrations, edit profiles, or archive accounts.</span>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search name, email, phone" />
+    </div>
+    <div class="filter-row">
+      <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="all">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+        <option value="BLOCKED">Blocked</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Driver</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Online</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1, 2, 3]">
+          <td colspan="7"><div class="skeleton"></div></td>
+        </tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async)">
+        <tr *ngFor="let d of paginator.items">
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm">{{ d.fullName.charAt(0) }}</div>
+              <strong>{{ d.fullName }}</strong>
+            </div>
+          </td>
+          <td>{{ d.email }}</td>
+          <td>{{ d.mobileNumber }}</td>
+          <td>
+            <ion-badge [color]="statusColor(d.status)">{{ statusLabel(d.status) }}</ion-badge>
+          </td>
+          <td>{{ d.isOnline ? 'Yes' : 'No' }}</td>
+          <td>{{ d.createdAt | date : 'mediumDate' }}</td>
+          <td>
+            <button type="button" class="icon-btn" (click)="openDrawer(d)" title="View">
+              <ion-icon name="eye-outline"></ion-icon>
+            </button>
+            <button
+              *ngIf="d.status === 'PENDING'"
+              type="button"
+              class="icon-btn"
+              (click)="confirmApprove(d)"
+              title="Approve"
+              [disabled]="actionBusy"
+            >
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+            </button>
+            <button
+              *ngIf="d.status === 'PENDING'"
+              type="button"
+              class="icon-btn danger"
+              (click)="openRejectAlert(d)"
+              title="Reject"
+              [disabled]="actionBusy"
+            >
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$ | async) && !filtered.length">
+      <ion-icon name="car-outline"></ion-icon>
+      <p>No drivers found</p>
+    </div>
+    <app-table-pagination
+      [paginator]="paginator"
+      entityLabel="drivers"
+      (pageChange)="onPageChange($event)"
+    ></app-table-pagination>
+  </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+  <aside class="order-drawer" [class.open]="drawerOpen">
+    <div class="drawer-header">
+      <h3 *ngIf="selected">{{ selected.fullName }}</h3>
+      <h3 *ngIf="!selected && drawerLoading">Loading…</h3>
+      <button type="button" class="icon-btn" (click)="closeDrawer()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="drawer-body" *ngIf="drawerLoading">
+      <div class="skeleton" style="height: 120px"></div>
+    </div>
+    <div class="drawer-body" *ngIf="selected as s">
+      <p>
+        <strong>Status</strong><br />
+        <ion-badge [color]="statusColor(s.status)">{{ statusLabel(s.status) }}</ion-badge>
+      </p>
+      <p *ngIf="s.rejectionReason && s.status === 'REJECTED'">
+        <strong>Rejection reason</strong><br />
+        {{ s.rejectionReason }}
+      </p>
+      <p *ngIf="s.reviewedAt"><strong>Reviewed</strong><br />{{ s.reviewedAt | date : 'medium' }}</p>
+      <p *ngIf="s.reviewedBy?.name">
+        <strong>Reviewed by</strong><br />{{ s.reviewedBy?.name }} ({{ s.reviewedBy?.email }})
+      </p>
+
+      <h4 class="drawer-section-title">Edit</h4>
+      <label class="field-label">Full name</label>
+      <input class="select-input" style="width: 100%; margin-bottom: 10px" [(ngModel)]="editFullName" />
+      <label class="field-label">Phone</label>
+      <input class="select-input" style="width: 100%; margin-bottom: 10px" [(ngModel)]="editMobile" />
+      <label class="field-label">Address</label>
+      <textarea class="select-input" style="width: 100%; min-height: 72px" [(ngModel)]="editAddress"></textarea>
+      <div class="drawer-actions" style="margin-top: 12px">
+        <button type="button" class="btn-primary" (click)="saveEdit()" [disabled]="actionBusy">Save changes</button>
+      </div>
+
+      <h4 class="drawer-section-title">Vehicle</h4>
+      <p class="sub-text" *ngIf="!s.vehicle?.['type']">Not provided</p>
+      <pre *ngIf="s.vehicle?.['type']" class="json-snippet">{{ s.vehicle | json }}</pre>
+
+      <h4 class="drawer-section-title">Documents</h4>
+      <ul class="doc-list" *ngIf="s.documents">
+        <li *ngIf="s.documents['licenseImage']">
+          <a [href]="mediaUrl(asString(s.documents['licenseImage']))" target="_blank" rel="noopener"
+            >License image</a
+          >
+        </li>
+        <li *ngIf="s.documents['aadhaarImage']">
+          <a [href]="mediaUrl(asString(s.documents['aadhaarImage']))" target="_blank" rel="noopener"
+            >Aadhaar image</a
+          >
+        </li>
+        <li *ngIf="s.documents['panImage']">
+          <a [href]="mediaUrl(asString(s.documents['panImage']))" target="_blank" rel="noopener">PAN image</a>
+        </li>
+      </ul>
+
+      <div class="drawer-actions">
+        <button
+          *ngIf="s.status === 'PENDING'"
+          type="button"
+          class="btn-primary"
+          (click)="confirmApprove(s)"
+          [disabled]="actionBusy"
+        >
+          Approve
+        </button>
+        <button
+          *ngIf="s.status === 'PENDING'"
+          type="button"
+          class="btn-secondary danger-text"
+          (click)="openRejectAlert(s)"
+          [disabled]="actionBusy"
+        >
+          Reject
+        </button>
+        <button
+          *ngIf="s.status === 'APPROVED' || s.status === 'PENDING' || s.status === 'REJECTED'"
+          type="button"
+          class="btn-secondary"
+          (click)="confirmBlock(s)"
+          [disabled]="actionBusy"
+        >
+          Block
+        </button>
+        <button type="button" class="btn-secondary danger-text" (click)="confirmArchive(s)" [disabled]="actionBusy">
+          Archive
+        </button>
+      </div>
+    </div>
+  </aside>
+</app-admin-shell>

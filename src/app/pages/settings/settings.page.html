@@ -1,0 +1,85 @@
+<app-admin-shell pageTitle="Settings">
+  <div class="settings-layout">
+    <nav class="settings-nav card">
+      <button type="button" *ngFor="let item of navItems" class="settings-nav-item" [class.active]="section===item.id" (click)="section=item.id">{{ item.label }}</button>
+    </nav>
+
+    <div class="settings-content card">
+      <ng-container *ngIf="section==='profile'">
+        <h3>Profile</h3>
+        <form [formGroup]="profileForm">
+          <div class="form-field"><label>Name</label><input formControlName="name" /></div>
+          <div class="form-field"><label>Email</label><input formControlName="email" /></div>
+          <div class="form-field"><label>Phone</label><input formControlName="phone" /></div>
+          <button type="button" class="btn-primary" (click)="save('Profile')">Save</button>
+        </form>
+      </ng-container>
+
+      <ng-container *ngIf="section==='app'">
+        <h3>App Settings</h3>
+        <form [formGroup]="appForm">
+          <div class="form-field"><label>App Name</label><input formControlName="appName" /></div>
+          <div class="form-field"><label>Currency</label><input formControlName="currency" /></div>
+          <div class="form-field"><label>Timezone</label><input formControlName="timezone" /></div>
+          <div class="form-field"><label>Default Delivery Fee (₹)</label><input type="number" formControlName="deliveryFee" /></div>
+          <div class="form-field"><label>Min Order Amount (₹)</label><input type="number" formControlName="minOrder" /></div>
+          <div class="form-field"><label>GST %</label><input type="number" formControlName="gst" /></div>
+          <button type="button" class="btn-primary" (click)="save('App settings')">Save</button>
+        </form>
+      </ng-container>
+
+      <ng-container *ngIf="section==='payment'">
+        <h3>Payment Config</h3>
+        <form [formGroup]="paymentForm">
+          <div class="form-field"><label>Razorpay Key</label><input formControlName="razorpayKey" /></div>
+          <div class="form-field"><label>UPI ID</label><input formControlName="upiId" /></div>
+          <div class="form-field row-toggle"><label>Cash on Delivery</label><ion-toggle formControlName="cod"></ion-toggle></div>
+          <button type="button" class="btn-primary" (click)="save('Payment config')">Save</button>
+        </form>
+      </ng-container>
+
+      <ng-container *ngIf="section==='delivery'">
+        <h3>Delivery Zones</h3>
+        <p class="hint">Configure delivery zones and fees per area.</p>
+        <div class="form-field"><label>Zone Name</label><input placeholder="South Mumbai" /></div>
+        <button type="button" class="btn-primary" (click)="save('Delivery zones')">Save</button>
+      </ng-container>
+
+      <ng-container *ngIf="section==='security'">
+        <h3>Security</h3>
+        <form [formGroup]="securityForm">
+          <div class="form-field"><label>Current Password</label><input type="password" formControlName="currentPassword" /></div>
+          <div class="form-field"><label>New Password</label><input type="password" formControlName="newPassword" /></div>
+          <div class="form-field row-toggle"><label>Two-Factor Authentication</label><ion-toggle formControlName="twoFa"></ion-toggle></div>
+          <button type="button" class="btn-primary" (click)="save('Password')">Change Password</button>
+        </form>
+        <hr />
+        <h4>Active Sessions</h4>
+        <div class="session-item" *ngFor="let s of sessions">
+          <div><strong>{{ s.device }}</strong><br /><span class="sub-text">{{ s.location }} · {{ s.lastActive }}</span></div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="section==='admins'">
+        <h3>Admin Users</h3>
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let a of adminPaginator.items">
+              <td>{{ a.name }}</td>
+              <td>{{ a.email }}</td>
+              <td>{{ a.role }}</td>
+              <td><span class="status-badge" [class.active]="a.status==='active'" [class.blocked]="a.status!=='active'">{{ a.status | titlecase }}</span></td>
+              <td><button type="button" class="btn-danger btn-sm" *ngIf="a.status==='active'">Revoke Access</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <app-table-pagination
+          [paginator]="adminPaginator"
+          entityLabel="admins"
+          (pageChange)="onAdminPageChange($event)"
+        ></app-table-pagination>
+      </ng-container>
+    </div>
+  </div>
+</app-admin-shell>

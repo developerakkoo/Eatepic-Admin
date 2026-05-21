@@ -1,0 +1,73 @@
+.stats-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 24px;
+  }
+
+  &.green {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  &.amber {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  &.purple {
+    background: #ede9fe;
+    color: #7c3aed;
+  }
+
+  &.blue {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+}
+
+.stats-value {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.stats-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0 0 8px;
+}
+
+.stats-trend {
+  font-size: 12px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &.up {
+    color: #16a34a;
+  }
+
+  &.down {
+    color: #dc2626;
+  }
+
+  ion-icon {
+    font-size: 14px;
+  }
+}

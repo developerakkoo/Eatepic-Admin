@@ -1,0 +1,82 @@
+<app-admin-shell pageTitle="Dashboard">
+  <div class="stats-grid" *ngIf="stats$ | async as stats">
+    <app-stats-card
+      *ngFor="let s of stats"
+      [label]="s.label"
+      [value]="s.value"
+      [trend]="s.trend"
+      [trendUp]="s.trendUp"
+      [icon]="s.icon"
+      [color]="s.color"
+    ></app-stats-card>
+  </div>
+
+  <div class="charts-row">
+    <div class="card chart-card">
+      <div class="card-header">
+        <h3>Orders Overview</h3>
+        <div class="range-tabs">
+          <button type="button" class="chip" [class.active]="(chartRange$ | async) === '7'" (click)="setRange('7')">7 Days</button>
+          <button type="button" class="chip" [class.active]="(chartRange$ | async) === '30'" (click)="setRange('30')">30 Days</button>
+          <button type="button" class="chip" [class.active]="(chartRange$ | async) === '90'" (click)="setRange('90')">90 Days</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas baseChart type="line" [data]="lineChartData" [options]="lineChartOptions"></canvas>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header"><h3>Revenue Breakdown</h3></div>
+      <div class="chart-wrap doughnut">
+        <canvas baseChart type="doughnut" [data]="doughnutData" [options]="doughnutOptions"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card recent-orders">
+    <div class="card-header">
+      <h3>Recent Orders</h3>
+      <a routerLink="/admin/orders" class="view-all">View All →</a>
+    </div>
+    <table class="admin-table" *ngIf="recentPaginator.totalCount">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Partner</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of recentPaginator.items">
+          <td><span class="order-id">{{ o.id }}</span></td>
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm">{{ o.customerName.charAt(0) }}</div>
+              <div>
+                <div>{{ o.customerName }}</div>
+                <div class="sub-text">{{ o.customerPhone }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ o.partner }}</td>
+          <td><strong>₹{{ o.amount }}</strong></td>
+          <td><span class="status-badge" [class]="o.status">{{ o.status | titlecase }}</span></td>
+          <td>{{ o.date }}</td>
+          <td>
+            <a [routerLink]="['/admin/orders']" class="icon-btn"><ion-icon name="eye-outline"></ion-icon></a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <app-table-pagination
+      [paginator]="recentPaginator"
+      entityLabel="orders"
+      (pageChange)="onRecentPageChange($event)"
+    ></app-table-pagination>
+  </div>
+</app-admin-shell>

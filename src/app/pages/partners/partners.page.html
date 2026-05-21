@@ -1,0 +1,56 @@
+<app-admin-shell pageTitle="Partners">
+  <div class="page-header">
+    <h2 class="page-title">Partners<span class="count-badge">{{ filtered.length }}</span></h2>
+    <button type="button" class="btn-primary">Add Partner</button>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search kitchen, owner, location" />
+    </div>
+    <div class="filter-row">
+      <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Kitchen</th><th>Owner</th><th>Rating</th><th>Orders</th><th>Cuisine</th><th>Location</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="8"><div class="skeleton"></div></td></tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async)">
+        <tr *ngFor="let p of paginator.items">
+          <td>
+            <div class="customer-cell">
+              <div class="avatar-sm kitchen-thumb">{{ p.name.charAt(0) }}</div>
+              <strong>{{ p.name }}</strong>
+            </div>
+          </td>
+          <td>{{ p.ownerName }}</td>
+          <td>⭐ {{ p.rating | number:'1.1-1' }}</td>
+          <td>{{ p.totalOrders }}</td>
+          <td>{{ p.cuisine }}</td>
+          <td>{{ p.location }}</td>
+          <td><span class="status-badge" [class]="p.status">{{ p.status | titlecase }}</span></td>
+          <td>
+            <button type="button" class="icon-btn"><ion-icon name="eye-outline"></ion-icon></button>
+            <button type="button" class="icon-btn"><ion-icon name="pencil-outline"></ion-icon></button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$|async) && !filtered.length"><ion-icon name="storefront-outline"></ion-icon><p>No partners</p></div>
+    <app-table-pagination [paginator]="paginator" entityLabel="partners" (pageChange)="onPageChange($event)"></app-table-pagination>
+  </div>
+</app-admin-shell>
