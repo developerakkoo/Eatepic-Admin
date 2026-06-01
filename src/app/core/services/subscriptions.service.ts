@@ -10,10 +10,22 @@ export interface SubscriptionStats {
   revenue: number;
 }
 
+export interface SubscriptionAnalytics {
+  activeSubscriptions: number;
+  newSubscriptions: number;
+  churnRate: number;
+  gmv: number;
+  mrr: number;
+  arr: number;
+  commissionRevenue: number;
+  settlementPending: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubscriptionsService {
   readonly subscriptions$ = new BehaviorSubject<Subscription[]>([]);
   readonly stats$ = new BehaviorSubject<SubscriptionStats>({ active: 0, expiring: 0, revenue: 0 });
+  readonly analytics$ = new BehaviorSubject<SubscriptionAnalytics | null>(null);
   readonly loading$ = new BehaviorSubject<boolean>(false);
   readonly total$ = new BehaviorSubject<number>(0);
   readonly page$ = new BehaviorSubject<number>(1);
@@ -25,6 +37,13 @@ export class SubscriptionsService {
       .get<{ data: SubscriptionStats }>('/api/admin/subscriptions/stats')
       .pipe(
         tap((res) => this.stats$.next(res.data)),
+        catchError(() => of(null))
+      )
+      .subscribe();
+    this.api
+      .get<{ data: SubscriptionAnalytics }>('/api/admin/subscriptions/analytics')
+      .pipe(
+        tap((res) => this.analytics$.next(res.data)),
         catchError(() => of(null))
       )
       .subscribe();

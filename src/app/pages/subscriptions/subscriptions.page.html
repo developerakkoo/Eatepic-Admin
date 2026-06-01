@@ -2,7 +2,15 @@
   <div class="stats-row" *ngIf="stats$ | async as st">
     <div class="mini-stat card"><span>Active</span><strong>{{ st.active }}</strong></div>
     <div class="mini-stat card"><span>Expiring This Week</span><strong>{{ st.expiring }}</strong></div>
-    <div class="mini-stat card"><span>Revenue from Subs</span><strong>{{ st.revenue }}</strong></div>
+    <div class="mini-stat card"><span>Revenue from Subs</span><strong>₹{{ st.revenue }}</strong></div>
+  </div>
+  <div class="stats-row" *ngIf="subsService.analytics$ | async as an">
+    <div class="mini-stat card"><span>MRR</span><strong>₹{{ an.mrr }}</strong></div>
+    <div class="mini-stat card"><span>ARR</span><strong>₹{{ an.arr }}</strong></div>
+    <div class="mini-stat card"><span>GMV</span><strong>₹{{ an.gmv }}</strong></div>
+    <div class="mini-stat card"><span>Commission</span><strong>₹{{ an.commissionRevenue }}</strong></div>
+    <div class="mini-stat card"><span>Churn %</span><strong>{{ an.churnRate }}</strong></div>
+    <div class="mini-stat card"><span>Settlements Pending</span><strong>{{ an.settlementPending }}</strong></div>
   </div>
 
   <div class="card filter-card">

@@ -29,7 +29,7 @@ export class SubscriptionsPage implements OnInit {
   driverDraft: Record<string, string> = {};
 
   constructor(
-    private subsService: SubscriptionsService,
+    readonly subsService: SubscriptionsService,
     private toast: ToastController
   ) {}
 
