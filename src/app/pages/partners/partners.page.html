@@ -1,7 +1,7 @@
 <app-admin-shell pageTitle="Partners">
   <div class="page-header">
-    <h2 class="page-title">Partners<span class="count-badge">{{ filtered.length }}</span></h2>
-    <button type="button" class="btn-primary">Add Partner</button>
+    <h2 class="page-title">Partners<span class="count-badge">{{ totalCount }}</span></h2>
+    <span class="sub-text">Review verification documents, approve or reject registrations.</span>
   </div>
 
   <div class="card filter-card">
@@ -10,11 +10,16 @@
       <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search kitchen, owner, location" />
     </div>
     <div class="filter-row">
+      <select class="select-input" [(ngModel)]="approvalFilter" (ngModelChange)="onFilterChange()">
+        <option value="all">All verification</option>
+        <option value="PENDING">Pending</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
       <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
-        <option value="all">All Status</option>
+        <option value="all">All status</option>
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
-        <option value="pending">Pending</option>
       </select>
     </div>
   </div>
@@ -23,11 +28,11 @@
     <table class="admin-table">
       <thead>
         <tr>
-          <th>Kitchen</th><th>Owner</th><th>Rating</th><th>Orders</th><th>Cuisine</th><th>Location</th><th>Status</th><th>Actions</th>
+          <th>Kitchen</th><th>Owner</th><th>Location</th><th>Verification</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
       <tbody *ngIf="loading$ | async">
-        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="8"><div class="skeleton"></div></td></tr>
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="6"><div class="skeleton"></div></td></tr>
       </tbody>
       <tbody *ngIf="!(loading$ | async)">
         <tr *ngFor="let p of paginator.items">
@@ -38,14 +43,33 @@
             </div>
           </td>
           <td>{{ p.ownerName }}</td>
-          <td>⭐ {{ p.rating | number:'1.1-1' }}</td>
-          <td>{{ p.totalOrders }}</td>
-          <td>{{ p.cuisine }}</td>
           <td>{{ p.location }}</td>
+          <td><ion-badge [color]="approvalColor(p.approvalStatus)">{{ approvalLabel(p.approvalStatus) }}</ion-badge></td>
           <td><span class="status-badge" [class]="p.status">{{ p.status | titlecase }}</span></td>
           <td>
-            <button type="button" class="icon-btn"><ion-icon name="eye-outline"></ion-icon></button>
-            <button type="button" class="icon-btn"><ion-icon name="pencil-outline"></ion-icon></button>
+            <button type="button" class="icon-btn" (click)="openDrawer(p)" title="View">
+              <ion-icon name="eye-outline"></ion-icon>
+            </button>
+            <button
+              *ngIf="p.approvalStatus !== 'APPROVED'"
+              type="button"
+              class="icon-btn"
+              (click)="confirmApprove(p)"
+              title="Approve"
+              [disabled]="actionBusy"
+            >
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+            </button>
+            <button
+              *ngIf="p.approvalStatus !== 'REJECTED'"
+              type="button"
+              class="icon-btn danger"
+              (click)="openRejectAlert(p)"
+              title="Reject"
+              [disabled]="actionBusy"
+            >
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
           </td>
         </tr>
       </tbody>
@@ -53,4 +77,73 @@
     <div class="empty-state" *ngIf="!(loading$|async) && !filtered.length"><ion-icon name="storefront-outline"></ion-icon><p>No partners</p></div>
     <app-table-pagination [paginator]="paginator" entityLabel="partners" (pageChange)="onPageChange($event)"></app-table-pagination>
   </div>
+
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+  <aside class="order-drawer" [class.open]="drawerOpen">
+    <div class="drawer-header">
+      <h3 *ngIf="selected">{{ selected.name }}</h3>
+      <h3 *ngIf="!selected && drawerLoading">Loading…</h3>
+      <button type="button" class="icon-btn" (click)="closeDrawer()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </div>
+    <div class="drawer-body" *ngIf="drawerLoading">
+      <div class="skeleton" style="height: 120px"></div>
+    </div>
+    <div class="drawer-body" *ngIf="selected as s">
+      <p>
+        <strong>Verification</strong><br />
+        <ion-badge [color]="approvalColor(s.approvalStatus)">{{ approvalLabel(s.approvalStatus) }}</ion-badge>
+      </p>
+      <p><strong>Owner</strong><br />{{ s.ownerName }}</p>
+      <p *ngIf="s.email"><strong>Email</strong><br />{{ s.email }}</p>
+      <p *ngIf="s.phone"><strong>Phone</strong><br />{{ s.phone }}</p>
+      <p *ngIf="s.location"><strong>Location</strong><br />{{ s.location }}</p>
+      <p *ngIf="s.rejectionReason && s.approvalStatus === 'REJECTED'">
+        <strong>Rejection reason</strong><br />
+        {{ s.rejectionReason }}
+      </p>
+      <p *ngIf="s.reviewedAt"><strong>Reviewed</strong><br />{{ s.reviewedAt | date : 'medium' }}</p>
+      <p *ngIf="s.reviewedBy?.name">
+        <strong>Reviewed by</strong><br />{{ s.reviewedBy?.name }} ({{ s.reviewedBy?.email }})
+      </p>
+
+      <h4 class="drawer-section-title">Documents</h4>
+      <ul class="doc-list" *ngIf="s.documents">
+        <li *ngIf="s.documents.panCard?.url">
+          <a [href]="mediaUrl(s.documents.panCard?.url)" target="_blank" rel="noopener">PAN Card</a>
+        </li>
+        <li *ngIf="s.documents.fssaiLicense?.url">
+          <a [href]="mediaUrl(s.documents.fssaiLicense?.url)" target="_blank" rel="noopener">FSSAI License</a>
+        </li>
+        <li *ngIf="s.documents.gstCertificate?.url">
+          <a [href]="mediaUrl(s.documents.gstCertificate?.url)" target="_blank" rel="noopener">GST Certificate</a>
+        </li>
+      </ul>
+      <p class="sub-text" *ngIf="!s.documents?.panCard?.url && !s.documents?.fssaiLicense?.url && !s.documents?.gstCertificate?.url">
+        No documents uploaded
+      </p>
+
+      <div class="drawer-actions">
+        <button
+          *ngIf="s.approvalStatus !== 'APPROVED'"
+          type="button"
+          class="btn-primary"
+          (click)="confirmApprove(s)"
+          [disabled]="actionBusy"
+        >
+          Approve
+        </button>
+        <button
+          *ngIf="s.approvalStatus !== 'REJECTED'"
+          type="button"
+          class="btn-secondary danger-text"
+          (click)="openRejectAlert(s)"
+          [disabled]="actionBusy"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  </aside>
 </app-admin-shell>

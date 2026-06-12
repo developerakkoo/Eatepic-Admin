@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, tap } from 'rxjs';
-import { mapApiKitchen, uiPartnerStatusToApi } from '../mappers/kitchen.mapper';
-import { Partner, PartnerStatus } from '../models/partner.model';
+import { mapApiKitchen, mapApiKitchenDetail, uiPartnerStatusToApi } from '../mappers/kitchen.mapper';
+import { Partner, PartnerApprovalStatus, PartnerDetail, PartnerStatus } from '../models/partner.model';
 import { ApiService } from './api.service';
 
 export interface PartnersQuery {
   search?: string;
   status?: PartnerStatus | 'all';
+  approvalStatus?: PartnerApprovalStatus | 'all';
   page?: number;
   limit?: number;
 }
@@ -33,6 +34,9 @@ export class PartnersService {
     };
     if (query.search?.trim()) params['search'] = query.search.trim();
     Object.assign(params, uiPartnerStatusToApi(query.status ?? 'all'));
+    if (query.approvalStatus && query.approvalStatus !== 'all') {
+      params['approvalStatus'] = query.approvalStatus;
+    }
 
     return this.api.get<KitchenListResponse>('/api/admin/kitchens', params).pipe(
       tap((res) => {
@@ -51,18 +55,25 @@ export class PartnersService {
     );
   }
 
-  getById(id: string): Observable<Partner & { raw?: Record<string, unknown> }> {
+  getById(id: string): Observable<PartnerDetail> {
     return this.api
       .get<{ data: Record<string, unknown> }>(`/api/admin/kitchens/${id}`)
-      .pipe(
-        map((res) => ({
-          ...mapApiKitchen({ ...res.data, stats: res.data['stats'] }),
-          raw: res.data,
-        }))
-      );
+      .pipe(map((res) => mapApiKitchenDetail(res.data)));
   }
 
   updateStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Observable<void> {
     return this.api.put(`/api/admin/kitchen/status/${id}`, { status }).pipe(map(() => undefined));
+  }
+
+  approve(id: string): Observable<void> {
+    return this.api
+      .post(`/api/admin/kitchens/${id}/approve`, {})
+      .pipe(map(() => undefined));
+  }
+
+  reject(id: string, reason: string): Observable<void> {
+    return this.api
+      .post(`/api/admin/kitchens/${id}/reject`, { reason })
+      .pipe(map(() => undefined));
   }
 }
