@@ -60,10 +60,25 @@
         <button type="button" class="icon-btn" aria-label="Search">
           <ion-icon name="search-outline"></ion-icon>
         </button>
-        <button type="button" class="icon-btn notif-btn" aria-label="Notifications">
+        <button type="button" class="icon-btn notif-btn" aria-label="Notifications" (click)="toggleInbox()">
           <ion-icon name="notifications-outline"></ion-icon>
-          <span class="dot"></span>
+          <span class="dot" *ngIf="(inboxUnread$ | async)! > 0"></span>
         </button>
+        <div class="inbox-dropdown card" *ngIf="inboxOpen">
+          <div class="inbox-header">
+            <strong>Support alerts</strong>
+          </div>
+          <button
+            type="button"
+            class="inbox-item"
+            *ngFor="let item of (inboxItems$ | async)?.slice(0, 8)"
+            (click)="openInboxItem(item)"
+          >
+            <p class="inbox-title">{{ item.title }}</p>
+            <p class="inbox-msg">{{ item.message }}</p>
+          </button>
+          <p class="inbox-empty" *ngIf="!(inboxItems$ | async)?.length">No alerts yet</p>
+        </div>
         <div class="avatar-sm top-avatar" *ngIf="user$ | async as user">{{ user.name.charAt(0) }}</div>
       </div>
     </header>

@@ -44,6 +44,10 @@ const routes: Routes = [
         loadChildren: () => import('../pages/notifications/notifications.module').then((m) => m.NotificationsModule),
       },
       {
+        path: 'support',
+        loadChildren: () => import('../pages/support/support.module').then((m) => m.SupportModule),
+      },
+      {
         path: 'settings',
         loadChildren: () => import('../pages/settings/settings.module').then((m) => m.SettingsModule),
       },

@@ -1,0 +1,62 @@
+<app-admin-shell pageTitle="Support">
+  <div class="page-header">
+    <h2 class="page-title">Support<span class="count-badge">{{ totalCount }}</span></h2>
+  </div>
+
+  <div class="card filter-card">
+    <div class="search-wrapper">
+      <ion-icon name="search-outline"></ion-icon>
+      <input [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Search ticket # or subject" />
+    </div>
+    <div class="filter-row">
+      <select class="select-input" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+        <option value="open">Open tickets</option>
+        <option value="ACTIVE">Active</option>
+        <option value="PENDING_RATING">Pending rating</option>
+        <option value="RESOLVED">Resolved</option>
+        <option value="CLOSED">Closed</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>User</th>
+          <th>Subject</th>
+          <th>Status</th>
+          <th>Presence</th>
+          <th>Last activity</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody *ngIf="loading$ | async">
+        <tr class="skeleton-row" *ngFor="let _ of [1,2,3]"><td colspan="7"><div class="skeleton"></div></td></tr>
+      </tbody>
+      <tbody *ngIf="!(loading$ | async)">
+        <tr *ngFor="let t of paginator.items" (click)="openTicket(t)" class="clickable-row">
+          <td>
+            <strong>{{ t.ticketNumber }}</strong>
+            <span class="nav-badge" *ngIf="t.unreadByAdmin > 0">{{ t.unreadByAdmin }}</span>
+          </td>
+          <td>{{ userName(t) }}</td>
+          <td>{{ t.subject }}</td>
+          <td><span class="status-badge" [ngClass]="statusClass(t.status)">{{ t.status }}</span></td>
+          <td>
+            <span class="presence-dot" [class.online]="isOnline(t)"></span>
+            {{ isOnline(t) ? 'Online' : ('Last seen ' + lastSeen(t)) }}
+          </td>
+          <td>{{ t.lastMessageAt | date: 'short' }}</td>
+          <td><ion-icon name="chevron-forward-outline"></ion-icon></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="!(loading$|async) && !tickets.length">
+      <ion-icon name="chatbubbles-outline"></ion-icon>
+      <p>No support tickets</p>
+    </div>
+    <app-table-pagination [paginator]="paginator" entityLabel="tickets" (pageChange)="onPageChange($event)"></app-table-pagination>
+  </div>
+</app-admin-shell>

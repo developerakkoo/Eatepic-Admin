@@ -1,0 +1,40 @@
+<app-admin-shell pageTitle="Support Chat">
+  <div class="chat-layout" *ngIf="!loading && ticket as t">
+    <div class="chat-header card">
+      <button type="button" class="icon-btn" (click)="back()"><ion-icon name="arrow-back-outline"></ion-icon></button>
+      <div class="chat-meta">
+        <h2>{{ t.ticketNumber }} · {{ t.subject }}</h2>
+        <p>
+          {{ t.user?.fullName || 'User' }} ·
+          <span class="presence-dot" [class.online]="userOnline()"></span>
+          {{ userOnline() ? 'Online' : 'Offline' }}
+        </p>
+      </div>
+      <div class="chat-actions">
+        <button type="button" class="btn-secondary" (click)="assignSelf()">Assign me</button>
+        <button type="button" class="btn-secondary" (click)="requestRating()" [disabled]="t.status === 'RESOLVED' || t.status === 'CLOSED'">Request rating</button>
+        <button type="button" class="btn-secondary danger" (click)="closeTicket()" [disabled]="t.status === 'RESOLVED' || t.status === 'CLOSED'">Close</button>
+      </div>
+    </div>
+
+    <div class="chat-thread card">
+      <div class="message" *ngFor="let m of messages" [class.mine]="isMine(m)" [class.system]="isSystem(m)">
+        <div class="bubble">
+          <p *ngIf="m.messageType === 'TEXT' || m.messageType === 'STATUS_UPDATE'">{{ m.body }}</p>
+          <p *ngIf="m.messageType === 'RATING_REQUEST'" class="system-note">{{ m.body }}</p>
+          <p *ngIf="m.messageType === 'RATING_SUBMITTED'" class="system-note">User submitted rating</p>
+          <span class="time">{{ m.createdAt | date: 'shortTime' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-composer card" *ngIf="t.status !== 'RESOLVED' && t.status !== 'CLOSED'">
+      <textarea [(ngModel)]="draft" (ngModelChange)="onDraftChange()" rows="2" placeholder="Type a reply…"></textarea>
+      <button type="button" class="btn-primary" (click)="send()" [disabled]="sending || !draft.trim()">Send</button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <div class="skeleton" style="height: 400px"></div>
+  </div>
+</app-admin-shell>
