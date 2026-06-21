@@ -204,7 +204,7 @@ export class OrdersPage implements OnInit {
   }
 
   assignDriver(auto = false): void {
-    if (!this.selectedOrder) return;
+    if (!this.selectedOrder || this.selectedOrder.selfDelivery) return;
     const body = auto
       ? { autoAssign: true }
       : { deliveryAgentId: this.selectedDriverId || null };

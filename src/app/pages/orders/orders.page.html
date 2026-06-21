@@ -115,7 +115,12 @@
           <span>{{ step.step }}</span>
         </div>
       </div>
-      <div class="form-field">
+      <div class="form-field" *ngIf="order.selfDelivery">
+        <div class="self-delivery-banner">
+          Delivery handled by the restaurant
+        </div>
+      </div>
+      <div class="form-field" *ngIf="!order.selfDelivery">
         <label>Assign driver</label>
         <select class="select-input" style="width:100%" [(ngModel)]="selectedDriverId">
           <option value="">Unassigned</option>

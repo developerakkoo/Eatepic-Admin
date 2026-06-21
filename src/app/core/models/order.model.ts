@@ -21,4 +21,5 @@ export interface Order {
   date: string;
   time: string;
   timeline: { step: string; done: boolean; at?: string }[];
+  selfDelivery?: boolean;
 }

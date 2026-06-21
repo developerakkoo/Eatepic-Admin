@@ -116,5 +116,6 @@ export function mapApiOrder(raw: Record<string, unknown>): Order {
     date: createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
     time: createdAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     timeline: buildTimeline(status, timeline),
+    selfDelivery: raw['selfDelivery'] === true,
   };
 }
