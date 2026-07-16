@@ -8,7 +8,18 @@
     <h3>{{ editing ? 'Edit Banner' : 'New Banner' }}</h3>
     <div class="form-grid">
       <label>Title<input class="text-input" [(ngModel)]="title" /></label>
-      <label>Redirect link<input class="text-input" [(ngModel)]="redirectLink" placeholder="/offers" /></label>
+      <label>
+        Redirect link
+        <input
+          class="text-input"
+          [(ngModel)]="redirectLink"
+          placeholder="/home#categories"
+        />
+        <small class="field-hint">
+          Examples: /home#categories, /home#category/CATEGORY_ID, /category/CATEGORY_ID,
+          /kitchen/KITCHEN_ID, /subscriptions, /cart, https://example.com
+        </small>
+      </label>
       <label>Image<input type="file" accept="image/*" (change)="onFileSelected($event)" /></label>
     </div>
     <div class="form-actions">
