@@ -10,14 +10,19 @@
       <label>Title<input class="text-input" [(ngModel)]="title" /></label>
       <label>
         Redirect link
-        <input
-          class="text-input"
-          [(ngModel)]="redirectLink"
-          placeholder="/home#categories"
-        />
+        <div class="link-input-row">
+          <input
+            class="text-input"
+            [(ngModel)]="redirectLink"
+            placeholder="/home#categories"
+          />
+          <button type="button" class="btn-secondary choose-link-btn" (click)="openLinkPicker()">
+            Choose link
+          </button>
+        </div>
         <small class="field-hint">
-          Examples: /home#categories, /home#category/CATEGORY_ID, /category/CATEGORY_ID,
-          /kitchen/KITCHEN_ID, /subscriptions, /cart, https://example.com
+          Where the banner takes the user when tapped. Use "Choose link" to pick
+          from all app screens or an external website — no need to remember the formats.
         </small>
       </label>
       <label>Image<input type="file" accept="image/*" (change)="onFileSelected($event)" /></label>
@@ -52,4 +57,98 @@
       <ion-icon name="images-outline"></ion-icon><p>No banners yet</p>
     </div>
   </div>
+
+  <ion-modal class="link-picker-modal" [isOpen]="linkModalOpen" (didDismiss)="closeLinkPicker()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Choose a banner link</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeLinkPicker()">
+              <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <p class="picker-intro">
+          Pick where the banner should take users when they tap it. Each option
+          explains what will happen in the app.
+        </p>
+
+        <div
+          class="link-option"
+          *ngFor="let option of linkOptions"
+          [class.selected]="selectedLinkOption?.id === option.id"
+          (click)="selectLinkOption(option)"
+        >
+          <div class="link-option-header">
+            <span class="link-option-name">{{ option.name }}</span>
+            <code class="link-option-template">{{ option.template }}</code>
+          </div>
+          <p class="link-option-description">{{ option.description }}</p>
+
+          <ng-container *ngIf="selectedLinkOption?.id === option.id">
+            <div class="link-option-extra" (click)="$event.stopPropagation()">
+              <ng-container [ngSwitch]="option.needs">
+                <div *ngSwitchCase="'category'">
+                  <div class="loading-hint" *ngIf="loadingLinkData">Loading categories…</div>
+                  <select
+                    *ngIf="!loadingLinkData"
+                    class="select-input"
+                    [(ngModel)]="selectedCategoryId"
+                  >
+                    <option value="">Select a category…</option>
+                    <option *ngFor="let c of categories" [value]="c._id">{{ c.name }}</option>
+                  </select>
+                </div>
+
+                <div *ngSwitchCase="'kitchen'">
+                  <div class="loading-hint" *ngIf="loadingLinkData">Loading kitchens…</div>
+                  <select
+                    *ngIf="!loadingLinkData"
+                    class="select-input"
+                    [(ngModel)]="selectedKitchenId"
+                  >
+                    <option value="">Select a kitchen…</option>
+                    <option *ngFor="let k of kitchens" [value]="k.id">{{ k.name }}</option>
+                  </select>
+                </div>
+
+                <div *ngSwitchCase="'url'">
+                  <input
+                    class="text-input"
+                    [(ngModel)]="externalUrl"
+                    placeholder="https://example.com/offer"
+                  />
+                  <small class="url-error" *ngIf="externalUrlInvalid">
+                    Enter a full website address starting with https://, e.g. https://example.com
+                  </small>
+                </div>
+              </ng-container>
+
+              <div class="link-preview" *ngIf="builtLink">
+                Link: <code>{{ builtLink }}</code>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </ion-content>
+      <ion-footer>
+        <ion-toolbar>
+          <div class="picker-actions">
+            <button type="button" class="btn-secondary" (click)="closeLinkPicker()">Cancel</button>
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!builtLink"
+              (click)="applyLink()"
+            >
+              Use this link
+            </button>
+          </div>
+        </ion-toolbar>
+      </ion-footer>
+    </ng-template>
+  </ion-modal>
 </app-admin-shell>
