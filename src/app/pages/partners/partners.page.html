@@ -112,20 +112,7 @@
       </p>
 
       <h4 class="drawer-section-title">Documents</h4>
-      <ul class="doc-list" *ngIf="s.documents">
-        <li *ngIf="s.documents.panCard?.url">
-          <a [href]="mediaUrl(s.documents.panCard?.url)" target="_blank" rel="noopener">PAN Card</a>
-        </li>
-        <li *ngIf="s.documents.fssaiLicense?.url">
-          <a [href]="mediaUrl(s.documents.fssaiLicense?.url)" target="_blank" rel="noopener">FSSAI License</a>
-        </li>
-        <li *ngIf="s.documents.gstCertificate?.url">
-          <a [href]="mediaUrl(s.documents.gstCertificate?.url)" target="_blank" rel="noopener">GST Certificate</a>
-        </li>
-      </ul>
-      <p class="sub-text" *ngIf="!s.documents?.panCard?.url && !s.documents?.fssaiLicense?.url && !s.documents?.gstCertificate?.url">
-        No documents uploaded
-      </p>
+      <app-document-gallery [documents]="selectedDocuments"></app-document-gallery>
 
       <div class="drawer-actions">
         <button

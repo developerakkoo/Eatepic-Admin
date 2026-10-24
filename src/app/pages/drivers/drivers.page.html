@@ -54,29 +54,53 @@
           <td>{{ d.isOnline ? 'Yes' : 'No' }}</td>
           <td>{{ d.createdAt | date : 'mediumDate' }}</td>
           <td>
-            <button type="button" class="icon-btn" (click)="openDrawer(d)" title="View">
-              <ion-icon name="eye-outline"></ion-icon>
-            </button>
-            <button
-              *ngIf="d.status === 'PENDING'"
-              type="button"
-              class="icon-btn"
-              (click)="confirmApprove(d)"
-              title="Approve"
-              [disabled]="actionBusy"
-            >
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </button>
-            <button
-              *ngIf="d.status === 'PENDING'"
-              type="button"
-              class="icon-btn danger"
-              (click)="openRejectAlert(d)"
-              title="Reject"
-              [disabled]="actionBusy"
-            >
-              <ion-icon name="close-circle-outline"></ion-icon>
-            </button>
+            <div class="row-actions">
+              <button type="button" class="icon-btn" (click)="openDrawer(d)" title="View">
+                <ion-icon name="eye-outline"></ion-icon>
+              </button>
+              <button
+                *ngIf="d.status === 'PENDING'"
+                type="button"
+                class="icon-btn"
+                (click)="confirmApprove(d)"
+                title="Approve"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </button>
+              <button
+                *ngIf="d.status === 'PENDING'"
+                type="button"
+                class="reject-btn"
+                (click)="openRejectAlert(d)"
+                title="Reject"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
+                Reject
+              </button>
+              <button
+                *ngIf="d.status === 'APPROVED' || d.status === 'PENDING' || d.status === 'REJECTED'"
+                type="button"
+                class="block-btn"
+                (click)="confirmBlock(d)"
+                title="Block"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="ban-outline" aria-hidden="true"></ion-icon>
+                Block
+              </button>
+              <button
+                type="button"
+                class="archive-btn"
+                (click)="confirmArchive(d)"
+                title="Archive"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="archive-outline" aria-hidden="true"></ion-icon>
+                Archive
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -134,23 +158,15 @@
       <pre *ngIf="s.vehicle?.['type']" class="json-snippet">{{ s.vehicle | json }}</pre>
 
       <h4 class="drawer-section-title">Documents</h4>
-      <ul class="doc-list" *ngIf="s.documents">
-        <li *ngIf="s.documents['licenseImage']">
-          <a [href]="mediaUrl(asString(s.documents['licenseImage']))" target="_blank" rel="noopener"
-            >License image</a
-          >
-        </li>
-        <li *ngIf="s.documents['aadhaarImage']">
-          <a [href]="mediaUrl(asString(s.documents['aadhaarImage']))" target="_blank" rel="noopener"
-            >Aadhaar image</a
-          >
-        </li>
-        <li *ngIf="s.documents['panImage']">
-          <a [href]="mediaUrl(asString(s.documents['panImage']))" target="_blank" rel="noopener">PAN image</a>
+      <ul class="doc-numbers" *ngIf="selectedDocNumbers.length">
+        <li *ngFor="let row of selectedDocNumbers">
+          <strong>{{ row.label }}</strong>
+          {{ row.value }}
         </li>
       </ul>
+      <app-document-gallery [documents]="selectedDocuments"></app-document-gallery>
 
-      <div class="drawer-actions">
+      <div class="decision-actions">
         <button
           *ngIf="s.status === 'PENDING'"
           type="button"
@@ -158,27 +174,31 @@
           (click)="confirmApprove(s)"
           [disabled]="actionBusy"
         >
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
           Approve
         </button>
         <button
           *ngIf="s.status === 'PENDING'"
           type="button"
-          class="btn-secondary danger-text"
+          class="btn-danger"
           (click)="openRejectAlert(s)"
           [disabled]="actionBusy"
         >
+          <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
           Reject
         </button>
         <button
           *ngIf="s.status === 'APPROVED' || s.status === 'PENDING' || s.status === 'REJECTED'"
           type="button"
-          class="btn-secondary"
+          class="btn-block"
           (click)="confirmBlock(s)"
           [disabled]="actionBusy"
         >
+          <ion-icon name="ban-outline" aria-hidden="true"></ion-icon>
           Block
         </button>
-        <button type="button" class="btn-secondary danger-text" (click)="confirmArchive(s)" [disabled]="actionBusy">
+        <button type="button" class="btn-archive" (click)="confirmArchive(s)" [disabled]="actionBusy">
+          <ion-icon name="archive-outline" aria-hidden="true"></ion-icon>
           Archive
         </button>
       </div>

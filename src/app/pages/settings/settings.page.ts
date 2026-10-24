@@ -37,7 +37,7 @@ export class SettingsPage implements OnInit {
   });
 
   appForm = this.fb.group({
-    appName: ['FoodAdmin'],
+    appName: ['EatEpic Admin'],
     currency: ['INR'],
     timezone: ['Asia/Kolkata'],
     deliveryFee: [40],

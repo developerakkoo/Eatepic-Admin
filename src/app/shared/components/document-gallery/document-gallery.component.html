@@ -1,0 +1,47 @@
+<p class="sub-text" *ngIf="!documents.length">No documents uploaded</p>
+
+<div class="doc-gallery" *ngIf="documents.length">
+  <article class="doc-card" *ngFor="let doc of documents">
+    <button type="button" class="doc-thumb" (click)="open(doc)" [attr.aria-label]="'View ' + doc.label">
+      <img *ngIf="isImage(doc)" [src]="doc.url" [alt]="doc.label" />
+      <span class="doc-file" *ngIf="!isImage(doc)">
+        <ion-icon [name]="isPdf(doc) ? 'document-text-outline' : 'attach-outline'"></ion-icon>
+        <span>{{ fileKind(doc) }}</span>
+      </span>
+    </button>
+    <div class="doc-meta">
+      <strong>{{ doc.label }}</strong>
+      <span class="doc-name">{{ doc.originalName || 'Uploaded file' }}</span>
+      <button type="button" class="doc-view" (click)="open(doc)">
+        <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
+        View
+      </button>
+    </div>
+  </article>
+</div>
+
+<div class="doc-viewer" *ngIf="active as doc">
+  <div class="doc-viewer__backdrop" (click)="close()"></div>
+  <div class="doc-viewer__panel" role="dialog" aria-modal="true" [attr.aria-label]="doc.label">
+    <header class="doc-viewer__header">
+      <div>
+        <h3>{{ doc.label }}</h3>
+        <p *ngIf="doc.originalName">{{ doc.originalName }}</p>
+      </div>
+      <button type="button" class="icon-btn" (click)="close()" aria-label="Close document">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </header>
+    <div class="doc-viewer__body">
+      <p class="doc-viewer__status" *ngIf="loading">Loading document…</p>
+      <img *ngIf="isImage(doc)" [src]="doc.url" [alt]="doc.label" />
+      <iframe *ngIf="isPdf(doc) && safePdfUrl" [src]="safePdfUrl" title="Document preview"></iframe>
+      <p class="doc-viewer__status" *ngIf="!loading && !isImage(doc) && !safePdfUrl">
+        {{ loadError || 'This file type opens best in a new tab.' }}
+      </p>
+    </div>
+    <footer class="doc-viewer__footer">
+      <a class="doc-open" [href]="doc.url" target="_blank" rel="noopener">Open in new tab</a>
+    </footer>
+  </div>
+</div>

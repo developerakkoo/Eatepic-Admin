@@ -4,6 +4,7 @@ import { Partner, PartnerApprovalStatus, PartnerDetail, PartnerStatus } from '..
 import { PartnersService } from '../../core/services/partners.service';
 import { messageFromApiError } from '../../core/utils/api-error';
 import { environment } from '../../../environments/environment';
+import { DocumentPreview, toDocumentPreview } from '../../shared/components/document-gallery/document-gallery.component';
 import { Paginator } from '../../shared/utils/paginator';
 
 @Component({
@@ -83,6 +84,19 @@ export class PartnersPage implements OnInit {
     if (s === 'APPROVED') return 'Approved';
     if (s === 'REJECTED') return 'Rejected';
     return 'Pending';
+  }
+
+  get selectedDocuments(): DocumentPreview[] {
+    const documents = this.selected?.documents;
+    if (!documents) return [];
+    const fields: Array<[string, unknown]> = [
+      ['PAN card', documents.panCard],
+      ['FSSAI license', documents.fssaiLicense],
+      ['GST certificate', documents.gstCertificate],
+    ];
+    return fields
+      .map(([label, source]) => toDocumentPreview(label, source, (path) => this.mediaUrl(path)))
+      .filter((item): item is DocumentPreview => !!item);
   }
 
   mediaUrl(path: string | undefined): string {

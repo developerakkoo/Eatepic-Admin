@@ -8,6 +8,7 @@ import {
 } from '../../core/services/drivers.service';
 import { messageFromApiError } from '../../core/utils/api-error';
 import { environment } from '../../../environments/environment';
+import { DocumentPreview, toDocumentPreview } from '../../shared/components/document-gallery/document-gallery.component';
 import { Paginator } from '../../shared/utils/paginator';
 
 @Component({
@@ -133,16 +134,49 @@ export class DriversPage implements OnInit {
     this.selected = null;
   }
 
+  get selectedDocuments(): DocumentPreview[] {
+    const documents = this.selected?.documents;
+    if (!documents) return [];
+    const legacy = (documents['legacy'] as Record<string, unknown> | undefined) || documents;
+    const fields: Array<[string, unknown]> = [
+      ['Aadhaar card', documents['aadhaarCard']],
+      ['PAN card', documents['panCard']],
+      ['Driving license', documents['drivingLicense']],
+      ['Vehicle RC', documents['vehicleRc']],
+      ['Aadhaar card', legacy['aadhaarImage']],
+      ['PAN card', legacy['panImage']],
+      ['Driving license', legacy['licenseImage']],
+    ];
+    const seen = new Set<string>();
+    const items: DocumentPreview[] = [];
+    for (const [label, source] of fields) {
+      const preview = toDocumentPreview(label, source, (path) => this.mediaUrl(path));
+      if (!preview || seen.has(preview.url)) continue;
+      seen.add(preview.url);
+      items.push(preview);
+    }
+    return items;
+  }
+
+  get selectedDocNumbers(): Array<{ label: string; value: string }> {
+    const documents = this.selected?.documents;
+    if (!documents) return [];
+    const legacy = (documents['legacy'] as Record<string, unknown> | undefined) || documents;
+    return [
+      ['Aadhaar number', legacy['aadhaarNumber']],
+      ['PAN number', legacy['panNumber']],
+      ['License number', legacy['licenseNumber']],
+    ]
+      .map(([label, value]) => ({ label: String(label), value: value != null ? String(value).trim() : '' }))
+      .filter((row) => row.value);
+  }
+
   mediaUrl(path: string | undefined): string {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     const base = environment.apiBaseUrl.replace(/\/$/, '');
     const p = path.startsWith('/') ? path : `/${path}`;
     return `${base}${p}`;
-  }
-
-  asString(value: unknown): string {
-    return value != null && value !== undefined ? String(value) : '';
   }
 
   async confirmApprove(d: AdminDriverListItem): Promise<void> {
