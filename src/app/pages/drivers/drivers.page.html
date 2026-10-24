@@ -154,8 +154,11 @@
       </div>
 
       <h4 class="drawer-section-title">Vehicle</h4>
-      <p class="sub-text" *ngIf="!s.vehicle?.['type']">Not provided</p>
-      <pre *ngIf="s.vehicle?.['type']" class="json-snippet">{{ s.vehicle | json }}</pre>
+      <p class="sub-text" *ngIf="!vehicleDetails.length">Not provided</p>
+      <p *ngFor="let row of vehicleDetails">
+        <strong>{{ row.label }}</strong><br />
+        {{ row.value }}
+      </p>
 
       <h4 class="drawer-section-title">Documents</h4>
       <ul class="doc-numbers" *ngIf="selectedDocNumbers.length">

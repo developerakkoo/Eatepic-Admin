@@ -92,7 +92,7 @@
                 <th>Date</th>
                 <th>Status</th>
                 <th>Order</th>
-                <th>Driver id</th>
+                <th>Driver</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -102,11 +102,10 @@
                 <td><span class="status-badge">{{ d['status'] }}</span></td>
                 <td><code class="order-id">{{ orderIdForRow(d) || '—' }}</code></td>
                 <td>
-                  <input
-                    class="cell-input"
-                    [(ngModel)]="driverDraft[deliveryRowId(d)]"
-                    placeholder="Driver ObjectId"
-                  />
+                  <select class="cell-input driver-select" [(ngModel)]="driverDraft[deliveryRowId(d)]">
+                    <option value="">Unassigned</option>
+                    <option *ngFor="let driver of drivers" [value]="driver.id">{{ driverOptionLabel(driver) }}</option>
+                  </select>
                 </td>
                 <td class="delivery-actions-cell">
                   <button type="button" class="btn-primary btn-xs" (click)="applyDriver(d)">Save driver</button>

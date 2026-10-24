@@ -21,7 +21,7 @@ export class OrdersPage implements OnInit {
 
   search = '';
   statusFilter: OrderStatus | 'all' = 'all';
-  dateFilter = 'today';
+  dateFilter: 'all' | 'today' | 'week' | 'month' = 'all';
   sortKey: SortKey = 'date';
   sortDir: SortDir = 'desc';
   selected = new Set<string>();
@@ -65,16 +65,25 @@ export class OrdersPage implements OnInit {
   }
 
   private dateRange(): { dateFrom?: string; dateTo?: string } {
-    const now = new Date();
-    const start = new Date(now);
+    if (this.dateFilter === 'all') return {};
+
+    const start = new Date();
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
     if (this.dateFilter === 'today') {
       start.setHours(0, 0, 0, 0);
     } else if (this.dateFilter === 'week') {
-      start.setDate(start.getDate() - 7);
+      start.setDate(start.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+    } else if (this.dateFilter === 'month') {
+      start.setDate(1);
+      start.setHours(0, 0, 0, 0);
     } else {
       return {};
     }
-    return { dateFrom: start.toISOString(), dateTo: now.toISOString() };
+
+    return { dateFrom: start.toISOString(), dateTo: end.toISOString() };
   }
 
   fetch(): void {
@@ -129,7 +138,7 @@ export class OrdersPage implements OnInit {
   resetFilters(): void {
     this.search = '';
     this.statusFilter = 'all';
-    this.dateFilter = 'today';
+    this.dateFilter = 'all';
     this.paginator.resetPage();
     this.fetch();
   }
@@ -142,6 +151,7 @@ export class OrdersPage implements OnInit {
   activeFilters(): string[] {
     const chips: string[] = [];
     if (this.statusFilter !== 'all') chips.push(`Status: ${this.statusFilter}`);
+    if (this.dateFilter !== 'all') chips.push(`Date: ${this.dateFilter}`);
     if (this.search) chips.push(`Search: ${this.search}`);
     return chips;
   }

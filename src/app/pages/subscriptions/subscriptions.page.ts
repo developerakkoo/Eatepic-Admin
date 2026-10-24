@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
+import { AssignableDriver } from '../../core/models/order.model';
 import { Subscription, SubStatus } from '../../core/models/subscription.model';
+import { OrdersService } from '../../core/services/orders.service';
 import { SubscriptionsService } from '../../core/services/subscriptions.service';
 import { messageFromApiError } from '../../core/utils/api-error';
 import { Paginator } from '../../shared/utils/paginator';
@@ -27,14 +29,17 @@ export class SubscriptionsPage implements OnInit {
   drawerDetail: Record<string, unknown> | null = null;
   drawerDeliveries: Record<string, unknown>[] = [];
   driverDraft: Record<string, string> = {};
+  drivers: AssignableDriver[] = [];
 
   constructor(
     readonly subsService: SubscriptionsService,
+    private ordersService: OrdersService,
     private toast: ToastController
   ) {}
 
   ngOnInit(): void {
     this.subsService.loadStats();
+    this.loadDrivers();
     this.fetch();
     this.subs$.subscribe((list) => {
       this.filtered = list;
@@ -79,13 +84,9 @@ export class SubscriptionsPage implements OnInit {
         for (const d of this.drawerDeliveries) {
           const id = String(d['_id'] ?? '');
           if (!id) continue;
-          const agent = d['deliveryBoyId'];
-          if (agent && typeof agent === 'object' && '_id' in agent) {
-            this.driverDraft[id] = String((agent as Record<string, unknown>)['_id']);
-          } else {
-            this.driverDraft[id] = '';
-          }
+          this.driverDraft[id] = this.driverIdFromDelivery(d);
         }
+        this.keepAssignedDriversInList();
         this.drawerLoading = false;
       },
       error: async () => {
@@ -138,6 +139,53 @@ export class SubscriptionsPage implements OnInit {
     const o = d['linkedOrderId'];
     if (!o || typeof o !== 'object') return '';
     return String((o as Record<string, unknown>)['_id'] ?? '');
+  }
+
+  driverOptionLabel(driver: AssignableDriver): string {
+    const phone = driver.mobileNumber ? ` (${driver.mobileNumber})` : '';
+    return `${driver.fullName}${phone}`;
+  }
+
+  private loadDrivers(): void {
+    this.ordersService.listDrivers().subscribe({
+      next: (list) => {
+        this.drivers = list;
+        this.keepAssignedDriversInList();
+      },
+      error: () => {},
+    });
+  }
+
+  private driverIdFromDelivery(d: Record<string, unknown>): string {
+    const agent = d['deliveryBoyId'];
+    if (!agent) return '';
+    if (typeof agent === 'string') return agent;
+    if (typeof agent === 'object' && '_id' in agent) {
+      return String((agent as Record<string, unknown>)['_id'] ?? '');
+    }
+    return '';
+  }
+
+  private keepAssignedDriversInList(): void {
+    const extras: AssignableDriver[] = [];
+    for (const delivery of this.drawerDeliveries) {
+      const agent = delivery['deliveryBoyId'];
+      if (!agent || typeof agent !== 'object' || !('_id' in agent)) continue;
+      const row = agent as Record<string, unknown>;
+      const id = String(row['_id'] ?? '');
+      if (!id || this.drivers.some((driver) => driver.id === id) || extras.some((driver) => driver.id === id)) {
+        continue;
+      }
+      extras.push({
+        id,
+        fullName: String(row['fullName'] || 'Assigned driver'),
+        mobileNumber: String(row['mobileNumber'] || ''),
+        isOnline: false,
+        isAvailable: true,
+        currentOrderId: null,
+      });
+    }
+    if (extras.length) this.drivers = [...this.drivers, ...extras];
   }
 
   applyDriver(d: Record<string, unknown>): void {

@@ -134,6 +134,26 @@ export class DriversPage implements OnInit {
     this.selected = null;
   }
 
+  get vehicleDetails(): Array<{ label: string; value: string }> {
+    const vehicle = this.selected?.vehicle;
+    if (!vehicle) return [];
+    const typeLabels: Record<string, string> = {
+      BIKE: 'Bike',
+      SCOOTER: 'Scooter',
+      BICYCLE: 'Bicycle',
+      CAR: 'Car',
+    };
+    const type = String(vehicle['type'] ?? '').trim().toUpperCase();
+    return [
+      ['Type', type ? typeLabels[type] || type.charAt(0) + type.slice(1).toLowerCase() : ''],
+      ['Number', vehicle['vehicleNumber']],
+      ['Model', vehicle['model']],
+      ['Color', vehicle['color']],
+    ]
+      .map(([label, value]) => ({ label: String(label), value: value != null ? String(value).trim() : '' }))
+      .filter((row) => row.value);
+  }
+
   get selectedDocuments(): DocumentPreview[] {
     const documents = this.selected?.documents;
     if (!documents) return [];

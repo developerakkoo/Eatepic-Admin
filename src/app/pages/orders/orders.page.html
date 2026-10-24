@@ -17,10 +17,10 @@
     <div class="filter-row">
       <button type="button" class="chip" *ngFor="let c of statusChips" [class.active]="statusFilter===c.value" (click)="setStatus(c.value)">{{ c.label }}</button>
       <select class="select-input" [(ngModel)]="dateFilter" (ngModelChange)="onSearch()">
+        <option value="all">All dates</option>
         <option value="today">Today</option>
         <option value="week">This Week</option>
         <option value="month">This Month</option>
-        <option value="custom">Custom</option>
       </select>
       <select class="select-input" [(ngModel)]="sortKey" (ngModelChange)="onSearch()">
         <option value="date">Newest</option>
