@@ -115,16 +115,10 @@ export class SupportChatPage implements OnInit, OnDestroy {
 
     this.sending = true;
     this.supportService.sendMessage(this.ticketId, body).subscribe({
-      next: (res) => {
+      next: () => {
         this.draft = '';
         this.sending = false;
-        const data = res as { data?: ChatMessage };
-        if (data.data) {
-          const id = data.data._id;
-          if (!this.messages.some((m) => m._id === id)) {
-            this.messages = [...this.messages, data.data];
-          }
-        }
+        this.refreshTicket();
       },
       error: async (err) => {
         this.sending = false;
@@ -148,20 +142,21 @@ export class SupportChatPage implements OnInit, OnDestroy {
 
   assignSelf(): void {
     this.supportService.assign(this.ticketId).subscribe({
-      next: (res) => {
-        const data = res as { data?: SupportTicket };
-        if (data.data) this.ticket = data.data;
+      next: () => this.refreshTicket(),
+      error: async (err) => {
+        const t = await this.toast.create({
+          message: messageFromApiError(err),
+          color: 'danger',
+          duration: 2500,
+        });
+        await t.present();
       },
     });
   }
 
   requestRating(): void {
     this.supportService.requestRating(this.ticketId).subscribe({
-      next: (res) => {
-        const data = res as { data?: SupportTicket };
-        if (data.data) this.ticket = data.data;
-        this.loadMessages();
-      },
+      next: () => this.refreshTicket(),
       error: async (err) => {
         const t = await this.toast.create({
           message: messageFromApiError(err),
@@ -175,9 +170,23 @@ export class SupportChatPage implements OnInit, OnDestroy {
 
   closeTicket(): void {
     this.supportService.close(this.ticketId).subscribe({
+      next: () => this.refreshTicket(),
+      error: async (err) => {
+        const t = await this.toast.create({
+          message: messageFromApiError(err),
+          color: 'danger',
+          duration: 2500,
+        });
+        await t.present();
+      },
+    });
+  }
+
+  private refreshTicket(): void {
+    if (!this.ticketId) return;
+    this.supportService.getById(this.ticketId).subscribe({
       next: (res) => {
-        const data = res as { data?: SupportTicket };
-        if (data.data) this.ticket = data.data;
+        this.ticket = res.data;
         this.loadMessages();
       },
     });

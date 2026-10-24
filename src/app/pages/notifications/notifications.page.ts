@@ -67,6 +67,7 @@ export class NotificationsPage implements OnInit {
 
   markRead(n: AppNotification): void {
     this.notificationsService.markRead(n.id).subscribe({
+      next: () => this.notificationsService.load().subscribe(),
       error: async (err) => {
         const t = await this.toast.create({
           message: messageFromApiError(err),
@@ -80,6 +81,7 @@ export class NotificationsPage implements OnInit {
 
   delete(n: AppNotification): void {
     this.notificationsService.delete(n.id).subscribe({
+      next: () => this.notificationsService.load().subscribe(),
       error: async (err) => {
         const t = await this.toast.create({
           message: messageFromApiError(err),
@@ -111,6 +113,7 @@ export class NotificationsPage implements OnInit {
         next: async () => {
           this.closeModal();
           this.sendForm.reset({ audience: 'all_users' });
+          this.notificationsService.load().subscribe();
           const t = await this.toast.create({
             message: 'Notification sent',
             color: 'success',

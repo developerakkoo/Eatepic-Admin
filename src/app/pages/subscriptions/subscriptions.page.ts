@@ -80,12 +80,7 @@ export class SubscriptionsPage implements OnInit {
       next: (data) => {
         this.drawerDetail = data.subscription;
         this.drawerDeliveries = data.deliveries || [];
-        this.driverDraft = {};
-        for (const d of this.drawerDeliveries) {
-          const id = String(d['_id'] ?? '');
-          if (!id) continue;
-          this.driverDraft[id] = this.driverIdFromDelivery(d);
-        }
+        this.syncDriverDrafts();
         this.keepAssignedDriversInList();
         this.drawerLoading = false;
       },
@@ -196,10 +191,7 @@ export class SubscriptionsPage implements OnInit {
     const body =
       trimmed === '' ? { deliveryBoyId: null } : { deliveryBoyId: trimmed };
     this.subsService.patchSubscriptionDelivery(subId, delId, body).subscribe({
-      next: (updated) => {
-        Object.assign(d, updated);
-        this.keepAssignedDriversInList();
-      },
+      next: () => this.afterDeliveryChange('Driver updated'),
       error: async (err) => {
         const t = await this.toast.create({
           message: messageFromApiError(err),
@@ -221,7 +213,7 @@ export class SubscriptionsPage implements OnInit {
         skipReason: reason || 'Skipped by admin',
       })
       .subscribe({
-        next: (updated) => Object.assign(d, updated),
+        next: () => this.afterDeliveryChange('Delivery skipped'),
         error: async (err) => {
           const t = await this.toast.create({
             message: messageFromApiError(err),
@@ -240,7 +232,7 @@ export class SubscriptionsPage implements OnInit {
     this.subsService
       .patchSubscriptionDelivery(subId, delId, { unlinkOrder: true })
       .subscribe({
-        next: (updated) => Object.assign(d, updated),
+        next: () => this.afterDeliveryChange('Order unlinked'),
         error: async (err) => {
           const t = await this.toast.create({
             message: messageFromApiError(err),
@@ -250,6 +242,47 @@ export class SubscriptionsPage implements OnInit {
           await t.present();
         },
       });
+  }
+
+  private syncDriverDrafts(): void {
+    const next: Record<string, string> = {};
+    for (const delivery of this.drawerDeliveries) {
+      const id = String(delivery['_id'] ?? '');
+      if (!id) continue;
+      next[id] = this.driverIdFromDelivery(delivery);
+    }
+    this.driverDraft = next;
+  }
+
+  private afterDeliveryChange(message: string): void {
+    this.refreshOpenSubscription();
+    this.fetch();
+    this.subsService.loadStats();
+    void this.toast
+      .create({ message, color: 'success', duration: 2000 })
+      .then((t) => t.present());
+  }
+
+  private refreshOpenSubscription(): void {
+    const current = this.selected;
+    if (!current || !this.drawerOpen) return;
+    this.subsService.getById(current.id).subscribe({
+      next: (data) => {
+        if (!this.drawerOpen || this.selected?.id !== current.id) return;
+        this.drawerDetail = data.subscription;
+        this.drawerDeliveries = [...(data.deliveries || [])];
+        this.syncDriverDrafts();
+        this.keepAssignedDriversInList();
+      },
+      error: async (err) => {
+        const t = await this.toast.create({
+          message: messageFromApiError(err),
+          color: 'danger',
+          duration: 2500,
+        });
+        await t.present();
+      },
+    });
   }
 
   onFilterChange(): void {
