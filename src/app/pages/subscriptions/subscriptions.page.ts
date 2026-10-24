@@ -196,7 +196,10 @@ export class SubscriptionsPage implements OnInit {
     const body =
       trimmed === '' ? { deliveryBoyId: null } : { deliveryBoyId: trimmed };
     this.subsService.patchSubscriptionDelivery(subId, delId, body).subscribe({
-      next: (updated) => Object.assign(d, updated),
+      next: (updated) => {
+        Object.assign(d, updated);
+        this.keepAssignedDriversInList();
+      },
       error: async (err) => {
         const t = await this.toast.create({
           message: messageFromApiError(err),
