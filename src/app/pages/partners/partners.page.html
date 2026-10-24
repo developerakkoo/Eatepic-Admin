@@ -47,29 +47,32 @@
           <td><ion-badge [color]="approvalColor(p.approvalStatus)">{{ approvalLabel(p.approvalStatus) }}</ion-badge></td>
           <td><span class="status-badge" [class]="p.status">{{ p.status | titlecase }}</span></td>
           <td>
-            <button type="button" class="icon-btn" (click)="openDrawer(p)" title="View">
-              <ion-icon name="eye-outline"></ion-icon>
-            </button>
-            <button
-              *ngIf="p.approvalStatus !== 'APPROVED'"
-              type="button"
-              class="icon-btn"
-              (click)="confirmApprove(p)"
-              title="Approve"
-              [disabled]="actionBusy"
-            >
-              <ion-icon name="checkmark-circle-outline"></ion-icon>
-            </button>
-            <button
-              *ngIf="p.approvalStatus !== 'REJECTED'"
-              type="button"
-              class="icon-btn danger"
-              (click)="openRejectAlert(p)"
-              title="Reject"
-              [disabled]="actionBusy"
-            >
-              <ion-icon name="close-circle-outline"></ion-icon>
-            </button>
+            <div class="row-actions">
+              <button type="button" class="icon-btn" (click)="openDrawer(p)" title="View">
+                <ion-icon name="eye-outline"></ion-icon>
+              </button>
+              <button
+                *ngIf="p.approvalStatus !== 'APPROVED'"
+                type="button"
+                class="icon-btn"
+                (click)="confirmApprove(p)"
+                title="Approve"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="checkmark-circle-outline"></ion-icon>
+              </button>
+              <button
+                *ngIf="p.approvalStatus !== 'REJECTED'"
+                type="button"
+                class="reject-btn"
+                (click)="openRejectAlert(p)"
+                title="Reject"
+                [disabled]="actionBusy"
+              >
+                <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
+                Reject
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -132,15 +135,17 @@
           (click)="confirmApprove(s)"
           [disabled]="actionBusy"
         >
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
           Approve
         </button>
         <button
           *ngIf="s.approvalStatus !== 'REJECTED'"
           type="button"
-          class="btn-secondary danger-text"
+          class="btn-danger"
           (click)="openRejectAlert(s)"
           [disabled]="actionBusy"
         >
+          <ion-icon name="close-circle-outline" aria-hidden="true"></ion-icon>
           Reject
         </button>
       </div>

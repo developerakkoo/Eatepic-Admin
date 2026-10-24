@@ -121,12 +121,73 @@
         </div>
       </div>
       <div class="form-field" *ngIf="!order.selfDelivery">
-        <label>Assign driver</label>
-        <select class="select-input" style="width:100%" [(ngModel)]="selectedDriverId">
-          <option value="">Unassigned</option>
-          <option *ngFor="let d of drivers" [value]="d.id">{{ d.fullName }} ({{ d.mobileNumber }})</option>
-        </select>
-        <div style="display:flex;gap:8px;margin-top:8px">
+        <div class="assign-head">
+          <label>Assign driver</label>
+          <div class="duty-summary">
+            <span class="duty-pill free">{{ freeDrivers.length }} free</span>
+            <span class="duty-pill busy">{{ busyDrivers.length }} busy</span>
+          </div>
+        </div>
+        <p class="assigned-now" *ngIf="order.assignedDriver as assigned; else noAssignedDriver">
+          Currently assigned
+          <strong>{{ assigned.fullName }}</strong>
+          <span class="sub-text">{{ assigned.mobileNumber }}</span>
+        </p>
+        <ng-template #noAssignedDriver>
+          <p class="assigned-now muted">No driver assigned yet</p>
+        </ng-template>
+
+        <div class="driver-picker" *ngIf="drivers.length; else noApprovedDrivers">
+          <button
+            type="button"
+            class="driver-option"
+            [class.selected]="selectedDriverId === ''"
+            (click)="selectDriver('')"
+          >
+            <span class="driver-option__main">
+              <strong>Unassigned</strong>
+              <span class="sub-text">Leave this order without a driver</span>
+            </span>
+          </button>
+
+          <p class="driver-group__label" *ngIf="currentDrivers.length">On this order</p>
+          <ng-container *ngFor="let d of currentDrivers">
+            <ng-container *ngTemplateOutlet="driverOption; context: { $implicit: d }"></ng-container>
+          </ng-container>
+
+          <p class="driver-group__label" *ngIf="freeDrivers.length">Free</p>
+          <ng-container *ngFor="let d of freeDrivers">
+            <ng-container *ngTemplateOutlet="driverOption; context: { $implicit: d }"></ng-container>
+          </ng-container>
+
+          <p class="driver-group__label" *ngIf="busyDrivers.length">Busy</p>
+          <ng-container *ngFor="let d of busyDrivers">
+            <ng-container *ngTemplateOutlet="driverOption; context: { $implicit: d }"></ng-container>
+          </ng-container>
+        </div>
+        <ng-template #noApprovedDrivers>
+          <p class="assigned-now muted">No approved drivers</p>
+        </ng-template>
+        <ng-template #driverOption let-d>
+          <button
+            type="button"
+            class="driver-option"
+            [class.selected]="selectedDriverId === d.id"
+            [class.busy]="driverDuty(d) === 'busy'"
+            (click)="selectDriver(d.id)"
+          >
+            <span class="driver-option__main">
+              <strong>{{ d.fullName }}</strong>
+              <span class="sub-text">{{ d.mobileNumber }}</span>
+            </span>
+            <span class="driver-option__meta">
+              <span class="duty-pill" [ngClass]="driverDuty(d)">{{ dutyLabel(d) }}</span>
+              <span class="presence" [class.online]="d.isOnline">{{ presenceLabel(d) }}</span>
+            </span>
+          </button>
+        </ng-template>
+        <p class="assign-hint" *ngIf="assignHint">{{ assignHint }}</p>
+        <div class="assign-actions">
           <button type="button" class="btn-ghost btn-sm" (click)="assignDriver(false)">Assign</button>
           <button type="button" class="btn-ghost btn-sm" (click)="assignDriver(true)">Auto-assign</button>
         </div>

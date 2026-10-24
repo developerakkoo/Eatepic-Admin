@@ -7,6 +7,15 @@ export interface OrderItem {
   price: number;
 }
 
+export interface AssignableDriver {
+  id: string;
+  fullName: string;
+  mobileNumber: string;
+  isOnline: boolean;
+  isAvailable: boolean;
+  currentOrderId: string | null;
+}
+
 export interface Order {
   id: string;
   customerName: string;
@@ -22,4 +31,5 @@ export interface Order {
   time: string;
   timeline: { step: string; done: boolean; at?: string }[];
   selfDelivery?: boolean;
+  assignedDriver?: AssignableDriver | null;
 }

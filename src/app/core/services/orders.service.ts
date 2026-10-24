@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, tap } from 'rxjs';
 import { mapApiOrder, uiStatusFilterToQuery, uiStatusToApi } from '../mappers/order.mapper';
-import { Order, OrderStatus } from '../models/order.model';
+import { AssignableDriver, Order, OrderStatus } from '../models/order.model';
+import { mapAssignableDriver } from '../mappers/order.mapper';
 import { ApiService } from './api.service';
 
 export interface OrdersQuery {
@@ -86,20 +87,18 @@ export class OrdersService {
     return this.api.patch(`/api/admin/orders/${orderId}/assign-driver`, body).pipe(map(() => undefined));
   }
 
-  listDrivers(): Observable<{ id: string; fullName: string; mobileNumber: string }[]> {
+  listDrivers(): Observable<AssignableDriver[]> {
     return this.api
       .get<{ data: Record<string, unknown>[] }>('/api/admin/drivers', {
         status: 'APPROVED',
-        limit: '200',
+        limit: '100',
         page: '1',
       })
       .pipe(
         map((res) =>
-          (res.data || []).map((d) => ({
-            id: String(d['_id'] || ''),
-            fullName: String(d['fullName'] || 'Driver'),
-            mobileNumber: String(d['mobileNumber'] || ''),
-          }))
+          (res.data || [])
+            .map((d) => mapAssignableDriver(d))
+            .filter((d): d is AssignableDriver => !!d)
         )
       );
   }

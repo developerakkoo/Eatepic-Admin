@@ -1,4 +1,4 @@
-import { Order, OrderItem, OrderStatus, PaymentMethod } from '../models/order.model';
+import { AssignableDriver, Order, OrderItem, OrderStatus, PaymentMethod } from '../models/order.model';
 
 const API_STATUSES = [
   'PLACED',
@@ -78,6 +78,27 @@ function buildTimeline(status: string, timeline?: Record<string, string | Date>)
   });
 }
 
+export function mapAssignableDriver(row: Record<string, unknown> | null | undefined): AssignableDriver | null {
+  if (!row || typeof row !== 'object') return null;
+  const id = String(row['_id'] || row['id'] || '');
+  if (!id) return null;
+  const currentOrder = row['currentOrder'];
+  const currentOrderId =
+    currentOrder && typeof currentOrder === 'object'
+      ? String((currentOrder as Record<string, unknown>)['_id'] || '')
+      : currentOrder
+        ? String(currentOrder)
+        : null;
+  return {
+    id,
+    fullName: String(row['fullName'] || 'Driver'),
+    mobileNumber: String(row['mobileNumber'] || ''),
+    isOnline: row['isOnline'] === true,
+    isAvailable: row['isAvailable'] !== false,
+    currentOrderId: currentOrderId || null,
+  };
+}
+
 export function mapApiOrder(raw: Record<string, unknown>): Order {
   const user = raw['user'] as Record<string, unknown> | string | undefined;
   const partner = raw['partner'] as Record<string, unknown> | string | undefined;
@@ -117,5 +138,6 @@ export function mapApiOrder(raw: Record<string, unknown>): Order {
     time: createdAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     timeline: buildTimeline(status, timeline),
     selfDelivery: raw['selfDelivery'] === true,
+    assignedDriver: mapAssignableDriver(raw['deliveryAgent'] as Record<string, unknown> | null),
   };
 }

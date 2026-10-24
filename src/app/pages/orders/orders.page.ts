@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
-import { Order, OrderStatus } from '../../core/models/order.model';
+import { AssignableDriver, Order, OrderStatus } from '../../core/models/order.model';
 import { AdminOrderSocketService } from '../../core/services/admin-order-socket.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { messageFromApiError } from '../../core/utils/api-error';
@@ -28,7 +28,7 @@ export class OrdersPage implements OnInit {
   drawerOpen = false;
   selectedOrder: Order | null = null;
   drawerStatus: OrderStatus = 'pending';
-  drivers: { id: string; fullName: string; mobileNumber: string }[] = [];
+  drivers: AssignableDriver[] = [];
   selectedDriverId = '';
 
   statusChips: { value: OrderStatus | 'all'; label: string }[] = [
@@ -53,11 +53,11 @@ export class OrdersPage implements OnInit {
 
   ngOnInit(): void {
     this.adminSocket.connect();
-    this.adminSocket.orderUpdate$.subscribe(() => this.fetch());
-    this.ordersService.listDrivers().subscribe({
-      next: (list) => (this.drivers = list),
-      error: () => {},
+    this.adminSocket.orderUpdate$.subscribe(() => {
+      this.fetch();
+      this.loadDrivers();
     });
+    this.loadDrivers();
     this.fetch();
     this.ordersService.orders$.subscribe((orders) => {
       this.applyClientSort(orders);
@@ -165,7 +165,9 @@ export class OrdersPage implements OnInit {
       next: (detail) => {
         this.selectedOrder = detail;
         this.drawerStatus = detail.status;
+        this.selectedDriverId = detail.assignedDriver?.id || '';
         this.drawerOpen = true;
+        this.loadDrivers();
       },
       error: async (err) => {
         const t = await this.toast.create({
@@ -213,6 +215,8 @@ export class OrdersPage implements OnInit {
         const t = await this.toast.create({ message: 'Driver assignment updated', color: 'success', duration: 2000 });
         await t.present();
         this.fetch();
+        this.loadDrivers();
+        this.refreshOpenOrder();
       },
       error: async (err) => {
         const t = await this.toast.create({ message: messageFromApiError(err), color: 'danger', duration: 2500 });
@@ -237,6 +241,93 @@ export class OrdersPage implements OnInit {
           duration: 2500,
         });
         await t.present();
+      },
+    });
+  }
+
+  get freeDrivers(): AssignableDriver[] {
+    return this.sortedDrivers().filter((driver) => this.driverDuty(driver) === 'free');
+  }
+
+  get busyDrivers(): AssignableDriver[] {
+    return this.sortedDrivers().filter((driver) => this.driverDuty(driver) === 'busy');
+  }
+
+  get currentDrivers(): AssignableDriver[] {
+    return this.sortedDrivers().filter((driver) => this.driverDuty(driver) === 'on-this-order');
+  }
+
+  driverDuty(driver: AssignableDriver): 'free' | 'busy' | 'on-this-order' {
+    const viewingId = this.selectedOrder?.id || '';
+    const onThisOrder =
+      (!!viewingId && driver.currentOrderId === viewingId) ||
+      this.selectedOrder?.assignedDriver?.id === driver.id;
+    if (onThisOrder && (!driver.currentOrderId || driver.currentOrderId === viewingId)) {
+      return 'on-this-order';
+    }
+    if (!driver.isAvailable || !!driver.currentOrderId) return 'busy';
+    return 'free';
+  }
+
+  dutyLabel(driver: AssignableDriver): string {
+    const duty = this.driverDuty(driver);
+    if (duty === 'on-this-order') return 'On this order';
+    return duty === 'free' ? 'Free' : 'Busy';
+  }
+
+  presenceLabel(driver: AssignableDriver): string {
+    return driver.isOnline ? 'Online' : 'Offline';
+  }
+
+  selectDriver(id: string): void {
+    this.selectedDriverId = id;
+  }
+
+  get selectedDriver(): AssignableDriver | null {
+    return this.drivers.find((driver) => driver.id === this.selectedDriverId) || null;
+  }
+
+  get assignHint(): string {
+    const driver = this.selectedDriver;
+    if (!driver) return '';
+    if (this.driverDuty(driver) === 'busy') {
+      return 'This driver is already on another delivery.';
+    }
+    if (!driver.isOnline && this.driverDuty(driver) === 'free') {
+      return 'This driver is free, but currently offline.';
+    }
+    return '';
+  }
+
+  private sortedDrivers(): AssignableDriver[] {
+    const rank = (driver: AssignableDriver): number => {
+      const duty = this.driverDuty(driver);
+      if (duty === 'on-this-order') return 0;
+      if (duty === 'free' && driver.isOnline) return 1;
+      if (duty === 'free') return 2;
+      return 3;
+    };
+    return [...this.drivers].sort((a, b) => {
+      const diff = rank(a) - rank(b);
+      return diff !== 0 ? diff : a.fullName.localeCompare(b.fullName);
+    });
+  }
+
+  private loadDrivers(): void {
+    this.ordersService.listDrivers().subscribe({
+      next: (list) => (this.drivers = list),
+      error: () => {},
+    });
+  }
+
+  private refreshOpenOrder(): void {
+    if (!this.selectedOrder) return;
+    const id = this.selectedOrder.id;
+    this.ordersService.getById(id).subscribe({
+      next: (detail) => {
+        if (this.selectedOrder?.id !== id) return;
+        this.selectedOrder = detail;
+        this.selectedDriverId = detail.assignedDriver?.id || '';
       },
     });
   }
